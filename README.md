@@ -1,6 +1,6 @@
-# IFCALongLivedAnalysis (AOD format)
+# Muon high-pT variables ntupler (AOD format)
 
-This framework is devoted to get the relevant collections from AOD and put them into plain trees in the context of the Long Lived analysis developed at IFCA.
+This framework is devoted to get the relevant collections from AOD and put them into plain trees.
 
 ## Installation
 
@@ -14,6 +14,10 @@ mkdir MyAnalysis
 
 cd MyAnalysis
 
-git clone https://github.com/longlivedpeople/AODAnalysis.git
+git clone https://github.com/fmanteca/AODAnalysis.git
+
+cd AODAnalysis/test
+
+cmsRun runAODAnalysis_cfg.py
 
 
