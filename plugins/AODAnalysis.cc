@@ -186,7 +186,7 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
        
        Hit_muonLink.push_back(iMuon);
 
-       //int iHit = itHit - itmuon->outerTrack()->recHitsBegin();
+       int iHit = itHit - itmuon->outerTrack()->recHitsBegin();
 
        DetId detid = (*itHit)->geographicalId(); 
 
@@ -207,7 +207,7 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
        //float gpY;
        //float gpZ;
 
-       std::cout << " - HOLA HIT" << std::endl;
+       std::cout << " - HOLA HIT " <<  iHit << std::endl;
        std::cout << "   THIS DETECTOR: " << detid.det() << " (MuonDet=2)" << std::endl;
        std::cout << "   THIS SUBDETECTOR: " << detid.subdetId() << " (DT=1, CSC=2, RPC=3)" << std::endl;
        std::cout << "   HITS LOCAL COORDS (x,y,z): " << "(" << lpX << "," << lpY << "," << lpZ << ")" << std::endl; 
@@ -233,7 +233,7 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 	   // gpY = surface.toGlobal((*itHit)->localPosition()).y();
 	   // gpZ = surface.toGlobal((*itHit)->localPosition()).z();
 
-     	   printf("   CSC\t[endcap][station][ringN][chamber][layer]:[%d][%d][%d][%d][%d]\t",
+     	   printf("   CSC\t[endcap][station][ringN][chamber][layer]:[%d][%d][%d][%d][%d]\n",
 		  id.endcap(), id.station(), id.ring(), id.chamber(), id.layer());
 
      	 }
