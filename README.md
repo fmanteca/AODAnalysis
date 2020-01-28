@@ -4,9 +4,9 @@ This framework is devoted to get the relevant collections from AOD and put them 
 
 ## Installation
 
-cmsrel CMSSW_9_4_4
+cmsrel CMSSW_10_6_0_patch2
 
-cd CMSSW_9_4_4/src
+cd CMSSW_10_6_0_patch2/src
 
 cmsenv
 
