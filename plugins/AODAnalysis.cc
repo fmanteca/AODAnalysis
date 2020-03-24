@@ -45,6 +45,19 @@
 #include "RecoMuon/Records/interface/MuonRecoGeometryRecord.h"
 
 // muon info
+#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
+#include "Geometry/CommonDetUnit/interface/GeomDetType.h"
+#include "Geometry/CommonDetUnit/interface/GeomDet.h"
+
+#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
+#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetType.h"
+#include "Geometry/TrackerGeometryBuilder/interface/StripGeomDetUnit.h"
+#include "Geometry/TrackerGeometryBuilder/interface/StripGeomDetType.h"
+
+#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
+#include "Geometry/CommonTopologies/interface/PixelTopology.h"
+#include "Geometry/CommonTopologies/interface/StripTopology.h"
+
 #include "Geometry/CSCGeometry/interface/CSCGeometry.h"
 #include "Geometry/DTGeometry/interface/DTGeometry.h"
 #include "Geometry/RPCGeometry/interface/RPCGeometry.h"
@@ -121,6 +134,10 @@ class AODAnalysis : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       edm::ParameterSet parameters;
 
       edm::EDGetTokenT<edm::View<reco::Muon> > theMuonCollection;
+      // edm::EDGetTokenT<edm::View<reco::Track> > thePickyTrackCollection;
+      // edm::EDGetTokenT<edm::View<reco::Track> > theTPFMSTrackCollection;
+      // edm::EDGetTokenT<edm::View<reco::Track> > thedytTrackCollection;
+      // edm::EDGetTokenT<edm::View<reco::Track> > theGlobalTrackCollection;
   
 };
 
@@ -133,6 +150,11 @@ AODAnalysis::AODAnalysis(const edm::ParameterSet& iConfig)
    parameters = iConfig;
 
    theMuonCollection = consumes<edm::View<reco::Muon> >  (parameters.getParameter<edm::InputTag>("MuonCollection"));
+   // thePickyTrackCollection = consumes<edm::View<reco::Track> >  (parameters.getParameter<edm::InputTag>("PickyTrackCollection"));
+   // theTPFMSTrackCollection = consumes<edm::View<reco::Track> >  (parameters.getParameter<edm::InputTag>("TPFMSTrackCollection"));
+   // thedytTrackCollection = consumes<edm::View<reco::Track> >  (parameters.getParameter<edm::InputTag>("dytTrackCollection"));
+   // theGlobalTrackCollection = consumes<edm::View<reco::Track> >  (parameters.getParameter<edm::InputTag>("GlobalTrackCollection"));
+
    
 }
 
@@ -145,7 +167,7 @@ AODAnalysis::~AODAnalysis()
 //=======================================================================================================================================================================================================================//
 void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-
+  
    /////////////////////////////////////////////////////////////////////////////////////
    ///////////////////////////////////// MAIN CODE /////////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
@@ -154,6 +176,25 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    
    edm::Handle<edm::View<reco::Muon> > muons;
    iEvent.getByToken(theMuonCollection, muons);
+
+
+   edm::ESHandle<TrackerGeometry> geom;
+   iSetup.get<TrackerDigiGeometryRecord>().get( geom );
+   const TrackerGeometry& theTracker(*geom);
+
+
+
+   // edm::Handle<edm::View<reco::Track> > pickytrack;
+   // iEvent.getByToken(thePickyTrackCollection, pickytrack);
+
+   // edm::Handle<edm::View<reco::Track> > TPFMStrack;
+   // iEvent.getByToken(theTPFMSTrackCollection, TPFMStrack);
+
+   // edm::Handle<edm::View<reco::Track> > dyttrack;
+   // iEvent.getByToken(thedytTrackCollection, dyttrack);
+
+   // edm::Handle<edm::View<reco::Track> > globaltrack;
+   // iEvent.getByToken(theGlobalTrackCollection, globaltrack);
 
    /////////////////////////////////// EVENT INFO //////////////////////////////////////
 
@@ -169,96 +210,176 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    ///////////////////////////////// GET MUON VARIABLES ////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
 
-
+   bool useGlobal = false;
+   bool useInner = false;
+   bool usePicky = false;
+   bool useDYT = true;
+   
    for (auto itmuon=muons->begin(); itmuon != muons->end(); itmuon++){
 
      int iMuon = itmuon - muons->begin();
+     
+     //if(itmuon->isHighPtMuon() != true){iMuon--;continue;}
+     //if(itmuon->isGlobalMuon() != true){iMuon--;continue;}
 
      std::cout << "HOLA MUON " << iMuon << std::endl;
+
+     //bool globalExists=false; 
+     //bool innerExists=false; 
+     //bool pickyExists=false; 
+     //bool dytExists=false; 
+
+     if(itmuon->globalTrack().isNonnull()){
+       std::cout << "Global dpt/pt = " << itmuon->globalTrack()->ptError()/itmuon->globalTrack()->pt() << std::endl;
+       std::cout << "chi2/ndof = " << itmuon->globalTrack()->chi2()/(float)itmuon->globalTrack()->ndof() << std::endl;
+       //globalExists=true;
+     }
+     
+     if(itmuon->innerTrack().isNonnull()){
+       std::cout << "Inner dpt/pt = " << itmuon->innerTrack()->ptError()/itmuon->innerTrack()->pt() << std::endl;
+       std::cout << "chi2/ndof = " << itmuon->innerTrack()->chi2()/(float)itmuon->innerTrack()->ndof() << std::endl;
+       //innerExists=true;
+     }
+
+     if(itmuon->pickyTrack().isNonnull()) {
+       std::cout << "Picky dpt/pt = " << itmuon->pickyTrack()->ptError()/itmuon->pickyTrack()->pt() << std::endl; 
+       std::cout << "chi2/ndof = " << itmuon->pickyTrack()->chi2()/(float)itmuon->pickyTrack()->ndof() << std::endl;
+       //pickyExists=true;
+     }
+
+
+     if(itmuon->dytTrack().isNonnull()) {
+       std::cout << "DYT dpt/pt = " << itmuon->dytTrack()->ptError()/itmuon->dytTrack()->pt() << std::endl; 
+       std::cout << "chi2/ndof = " << itmuon->dytTrack()->chi2()/(float)itmuon->dytTrack()->ndof() << std::endl;
+       //dytExists=true;
+     }
+     
 
      Muon_pt.push_back(itmuon->pt());
      Muon_eta.push_back(itmuon->eta());
      Muon_phi.push_back(itmuon->phi());
+   
 
-     int nhits = 0;
-     
-     for (auto itHit = itmuon->outerTrack()->recHitsBegin(); itHit != itmuon->outerTrack()->recHitsEnd(); itHit++) {
-       
-       Hit_muonLink.push_back(iMuon);
+   
+     //int nhits = 0;
+     if(itmuon->innerTrack().isNonnull()) {
+       for (auto itHit = itmuon->innerTrack()->recHitsBegin(); itHit != itmuon->innerTrack()->recHitsEnd(); itHit++) {
 
-       int iHit = itHit - itmuon->outerTrack()->recHitsBegin();
+	 DetId detid = (*itHit)->geographicalId(); 
 
-       DetId detid = (*itHit)->geographicalId(); 
+	 LocalPoint lp = (*itHit)->localPosition();
+	 //LocalError le = (*itHit)->localPositionError();
 
-       //REMOVE MUON ID = TRACKER
-       if (detid.det() != DetId::Muon) {
-	 continue;
+	 Hit_lpX.push_back(lp.x());
+	 Hit_lpY.push_back(lp.y());
+	 Hit_lpZ.push_back(lp.z());
+
+	 
+	 if (detid.det() == DetId::Tracker) {
+
+	   const PixelGeomDetUnit* theGeomDet = dynamic_cast<const PixelGeomDetUnit*> (theTracker.idToDet(detid) );
+
+	    //const StripGeomDetUnit* theGeomDet = dynamic_cast<const StripGeomDetUnit*>( theTracker.idToDet(detid) );
+	   //GlobalPoint GP = theGeomDet->surface().toGlobal(Local3DPoint(lp));
+	   GlobalPoint gp = theGeomDet->surface().toGlobal(Local3DPoint(lp.x(),lp.y(),lp.z()));
+
+	   Hit_gpX.push_back(gp.x());
+	   Hit_gpY.push_back(gp.y());
+	   Hit_gpZ.push_back(gp.z());
+
+	   std::cout << "Tracker" << std::endl;
+	 }else if (detid.det() == DetId::Muon) {
+	   std::cout << "MuonSys" << std::endl;
+	 }else {
+	   continue;
+	 }
+
+
        }
-
-       LocalPoint lp = (*itHit)->localPosition();
-       float lpX= lp.x();
-       float lpY = lp.y();
-       float lpZ = lp.z();
-       Hit_lpX.push_back(lpX);
-       Hit_lpY.push_back(lpY);
-       Hit_lpZ.push_back(lpZ);
-
-       //float gpX; //FIXME!!!
-       //float gpY;
-       //float gpZ;
-
-       std::cout << " - HOLA HIT " <<  iHit << std::endl;
-       std::cout << "   THIS DETECTOR: " << detid.det() << " (MuonDet=2)" << std::endl;
-       std::cout << "   THIS SUBDETECTOR: " << detid.subdetId() << " (DT=1, CSC=2, RPC=3)" << std::endl;
-       std::cout << "   HITS LOCAL COORDS (x,y,z): " << "(" << lpX << "," << lpY << "," << lpZ << ")" << std::endl; 
-
-       if (detid.det() == DetId::Muon) {
-
-	 nhits++;	 
-     	 int systemMuon  = detid.subdetId(); // 1 DT; 2 CSC; 3 RPC
-
-     	 if ( systemMuon == MuonSubdetId::CSC) {
-     	   CSCDetId id(detid.rawId());
-
-	   //edm::ESHandle<CSCGeometry> theCSCGeometry;
-	   //iSetup.get<MuonGeometryRecord>().get(theCSCGeometry);
-
-	   //const CSCGeometry& theCSCMuon(*theCSCGeometry);
-	   //DetId theDetUnitId((*itHit)->detUnitId());
-	   // const GeomDetUnit *theDet = theCSCMuon.idToDetUnit(theDetUnitId);
-	   //const GeomDetUnit *theDet = theCSCMuon.idToDetUnit(systemMuon);
-	   //const BoundPlane& bSurface = theDet->surface();
-	   // const Surface& surface = (*itHit)->detUnit()->surface();
-	   // gpX = surface.toGlobal((*itHit)->localPosition()).x();
-	   // gpY = surface.toGlobal((*itHit)->localPosition()).y();
-	   // gpZ = surface.toGlobal((*itHit)->localPosition()).z();
-
-     	   printf("   CSC\t[endcap][station][ringN][chamber][layer]:[%d][%d][%d][%d][%d]\n",
-		  id.endcap(), id.station(), id.ring(), id.chamber(), id.layer());
-
-     	 }
-
-     	 else if ( systemMuon == MuonSubdetId::DT ) {
-     	   DTWireId id(detid.rawId());
-     	   printf("   DT \t[station][layer][superlayer][wheel][sector]:[%d][%d][%d][%d][%d]\n", id.station(),id.layer(),id.superLayer(), id.wheel(), id.sector());
-	   
-     	 }
-     	 else if ( systemMuon == MuonSubdetId::RPC) {
-     	   RPCDetId id(detid.rawId());
-     	   printf("   RPC\t[station]:[%d]\n", id.station());
-     	 }
-       
-	 Hit_gpX.push_back(0.0); //FIXME!!!
-	 Hit_gpY.push_back(0.0);
-	 Hit_gpZ.push_back(0.0);
-	 	 
-       }
-       else{continue;} //HIT NOT IN MUON DETECTOR  
-
      }
-
-     nHits.push_back(nhits);
    }
+   // for (auto ittrack=dyttrack->begin(); ittrack != dyttrack->end(); ittrack++){
+   //   for (auto itHit = ittrack->recHitsBegin(); itHit != ittrack->recHitsEnd(); itHit++) {
+   //     std::cout << "HOLAAA" << std::endl;
+   //   }
+   // }
+
+       
+       // Hit_muonLink.push_back(iMuon);
+
+       // int iHit = itHit - itmuon->dytTrack()->recHitsBegin();
+
+       // DetId detid = (*itHit)->geographicalId(); 
+
+       // //REMOVE MUON ID = TRACKER
+       // // if (detid.det() != DetId::Muon) {
+       // // 	 continue;
+       // // }
+
+       // LocalPoint lp = (*itHit)->localPosition();
+       // float lpX= lp.x();
+       // float lpY = lp.y();
+       // float lpZ = lp.z();
+       // Hit_lpX.push_back(lpX);
+       // Hit_lpY.push_back(lpY);
+       // Hit_lpZ.push_back(lpZ);
+
+       // //float gpX; //FIXME!!!
+       // //float gpY;
+       // //float gpZ;
+
+       // std::cout << " - HOLA HIT " <<  iHit << std::endl;
+       // std::cout << "   THIS DETECTOR: " << detid.det() << " (MuonDet=2)" << std::endl;
+       // std::cout << "   THIS SUBDETECTOR: " << detid.subdetId() << " (DT=1, CSC=2, RPC=3)" << std::endl;
+       // std::cout << "   HITS LOCAL COORDS (x,y,z): " << "(" << lpX << "," << lpY << "," << lpZ << ")" << std::endl; 
+
+       // if (detid.det() == DetId::Muon) {
+
+       // 	 nhits++;	 
+       // 	 int systemMuon  = detid.subdetId(); // 1 DT; 2 CSC; 3 RPC
+
+       // 	 if ( systemMuon == MuonSubdetId::CSC) {
+       // 	   CSCDetId id(detid.rawId());
+
+       // 	   //edm::ESHandle<CSCGeometry> theCSCGeometry;
+       // 	   //iSetup.get<MuonGeometryRecord>().get(theCSCGeometry);
+
+       // 	   //const CSCGeometry& theCSCMuon(*theCSCGeometry);
+       // 	   //DetId theDetUnitId((*itHit)->detUnitId());
+       // 	   // const GeomDetUnit *theDet = theCSCMuon.idToDetUnit(theDetUnitId);
+       // 	   //const GeomDetUnit *theDet = theCSCMuon.idToDetUnit(systemMuon);
+       // 	   //const BoundPlane& bSurface = theDet->surface();
+       // 	   // const Surface& surface = (*itHit)->detUnit()->surface();
+       // 	   // gpX = surface.toGlobal((*itHit)->localPosition()).x();
+       // 	   // gpY = surface.toGlobal((*itHit)->localPosition()).y();
+       // 	   // gpZ = surface.toGlobal((*itHit)->localPosition()).z();
+
+       // 	   printf("   CSC\t[endcap][station][ringN][chamber][layer]:[%d][%d][%d][%d][%d]\n",
+       // 		  id.endcap(), id.station(), id.ring(), id.chamber(), id.layer());
+
+       // 	 }
+
+       // 	 else if ( systemMuon == MuonSubdetId::DT ) {
+       // 	   DTWireId id(detid.rawId());
+       // 	   printf("   DT \t[station][layer][superlayer][wheel][sector]:[%d][%d][%d][%d][%d]\n", id.station(),id.layer(),id.superLayer(), id.wheel(), id.sector());
+	   
+       // 	 }
+       // 	 else if ( systemMuon == MuonSubdetId::RPC) {
+       // 	   RPCDetId id(detid.rawId());
+       // 	   printf("   RPC\t[station]:[%d]\n", id.station());
+       // 	 }
+       
+       // 	 Hit_gpX.push_back(0.0); //FIXME!!!
+       // 	 Hit_gpY.push_back(0.0);
+       // 	 Hit_gpZ.push_back(0.0);
+	 	 
+       // }
+       // else{continue;} //HIT NOT IN MUON DETECTOR  
+
+     //}
+
+   nHits.push_back(0);
+
      
    /////////////////////////////////////////////////////////////////////////////////////
    /////////////////////////////////// FILL THE TREE ///////////////////////////////////
