@@ -6,7 +6,8 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-
+#include "RecoMuon/TrackingTools/interface/MuonPatternRecoDumper.h"
+#include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 //framework includes
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
 #include "DataFormats/MuonDetId/interface/MuonSubdetId.h"
@@ -44,19 +45,14 @@
 #include "RecoMuon/TransientTrackingRecHit/interface/MuonTransientTrackingRecHit.h"
 #include "RecoMuon/Records/interface/MuonRecoGeometryRecord.h"
 
+
 // muon info
-#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
 #include "Geometry/CommonDetUnit/interface/GeomDetType.h"
 #include "Geometry/CommonDetUnit/interface/GeomDet.h"
 
-#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
-#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetType.h"
-#include "Geometry/TrackerGeometryBuilder/interface/StripGeomDetUnit.h"
-#include "Geometry/TrackerGeometryBuilder/interface/StripGeomDetType.h"
-
-#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
-#include "Geometry/CommonTopologies/interface/PixelTopology.h"
-#include "Geometry/CommonTopologies/interface/StripTopology.h"
+//#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
+//#include "Geometry/CommonTopologies/interface/PixelTopology.h"
+//#include "Geometry/CommonTopologies/interface/StripTopology.h"
 
 #include "Geometry/CSCGeometry/interface/CSCGeometry.h"
 #include "Geometry/DTGeometry/interface/DTGeometry.h"
@@ -66,6 +62,12 @@
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
 #include "TrackingTools/Records/interface/TrackingComponentsRecord.h"
+
+#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
+#include "TrackingTools/Records/interface/TransientTrackRecord.h"
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
+#include "TrackingTools/TrackFitters/interface/TrajectoryFitter.h"
 
 #include <string>
 #include <iostream>
@@ -116,6 +118,8 @@ std::vector<float> Hit_gpZ;
 TFile *file_out;
 TTree *tree_out;
 
+class MuonServiceProxy;
+
 //=======================================================================================================================================================================================================================//
 class AODAnalysis : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
@@ -134,10 +138,9 @@ class AODAnalysis : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       edm::ParameterSet parameters;
 
       edm::EDGetTokenT<edm::View<reco::Muon> > theMuonCollection;
-      // edm::EDGetTokenT<edm::View<reco::Track> > thePickyTrackCollection;
-      // edm::EDGetTokenT<edm::View<reco::Track> > theTPFMSTrackCollection;
-      // edm::EDGetTokenT<edm::View<reco::Track> > thedytTrackCollection;
-      // edm::EDGetTokenT<edm::View<reco::Track> > theGlobalTrackCollection;
+
+      std::string propagator_;
+      MuonServiceProxy *theService;
   
 };
 
@@ -150,12 +153,9 @@ AODAnalysis::AODAnalysis(const edm::ParameterSet& iConfig)
    parameters = iConfig;
 
    theMuonCollection = consumes<edm::View<reco::Muon> >  (parameters.getParameter<edm::InputTag>("MuonCollection"));
-   // thePickyTrackCollection = consumes<edm::View<reco::Track> >  (parameters.getParameter<edm::InputTag>("PickyTrackCollection"));
-   // theTPFMSTrackCollection = consumes<edm::View<reco::Track> >  (parameters.getParameter<edm::InputTag>("TPFMSTrackCollection"));
-   // thedytTrackCollection = consumes<edm::View<reco::Track> >  (parameters.getParameter<edm::InputTag>("dytTrackCollection"));
-   // theGlobalTrackCollection = consumes<edm::View<reco::Track> >  (parameters.getParameter<edm::InputTag>("GlobalTrackCollection"));
-
-   
+   propagator_ = iConfig.getParameter<std::string>("Propagator");
+   edm::ParameterSet serviceParameters = iConfig.getParameter<edm::ParameterSet>("ServiceParameters");
+   theService = new MuonServiceProxy(serviceParameters);
 }
 
 //=======================================================================================================================================================================================================================//
@@ -177,24 +177,12 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    edm::Handle<edm::View<reco::Muon> > muons;
    iEvent.getByToken(theMuonCollection, muons);
 
-
-   edm::ESHandle<TrackerGeometry> geom;
-   iSetup.get<TrackerDigiGeometryRecord>().get( geom );
-   const TrackerGeometry& theTracker(*geom);
-
-
-
-   // edm::Handle<edm::View<reco::Track> > pickytrack;
-   // iEvent.getByToken(thePickyTrackCollection, pickytrack);
-
-   // edm::Handle<edm::View<reco::Track> > TPFMStrack;
-   // iEvent.getByToken(theTPFMSTrackCollection, TPFMStrack);
-
-   // edm::Handle<edm::View<reco::Track> > dyttrack;
-   // iEvent.getByToken(thedytTrackCollection, dyttrack);
-
-   // edm::Handle<edm::View<reco::Track> > globaltrack;
-   // iEvent.getByToken(theGlobalTrackCollection, globaltrack);
+   //-------------------------------------------------------------------------//
+   //------------------------Added by Pablo-----------------------------------//
+   //-------------------------------------------------------------------------//
+   theService->update(iSetup);
+   //-------------------------------------------------------------------------//
+   //-------------------------------------------------------------------------//
 
    /////////////////////////////////// EVENT INFO //////////////////////////////////////
 
@@ -208,7 +196,7 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
  
    /////////////////////////////////////////////////////////////////////////////////////
    ///////////////////////////////// GET MUON VARIABLES ////////////////////////////////
-   /////////////////////////////////////////////////////////////////////////////////////
+   ////////////////////////////////////////////////try/////////////////////////////////////
 
    bool useGlobal = false;
    bool useInner = false;
@@ -248,33 +236,69 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
      }
 
 
-     if(itmuon->dytTrack().isNonnull()) {
-       std::cout << "DYT dpt/pt = " << itmuon->dytTrack()->ptError()/itmuon->dytTrack()->pt() << std::endl; 
-       std::cout << "chi2/ndof = " << itmuon->dytTrack()->chi2()/(float)itmuon->dytTrack()->ndof() << std::endl;
-       //dytExists=true;
-     }
+     //if(itmuon->dytTrack().isNonnull()) {
+     //  std::cout << "DYT dpt/pt = " << itmuon->Track()->ptError()/itmuon->dytTrack()->pt() << std::endl; 
+     //  std::cout << "chi2/ndof = " << itmuon->Track()->chi2()/(float)itmuon->dytTrack()->ndof() << std::endl;
+     //  //dytExists=true;
+     //}
      
-
      Muon_pt.push_back(itmuon->pt());
      Muon_eta.push_back(itmuon->eta());
      Muon_phi.push_back(itmuon->phi());
-   
+     
+     //-------------------------------------------------------------------------//
+     //------------------------Added by Pablo-----------------------------------//
+     //-------------------------------------------------------------------------//
+     //We don't want crap tracks.
+     if(!(itmuon->innerTrack().isNonnull() && itmuon->globalTrack().isNonnull())) continue;
 
-   
-     //int nhits = 0;
-     if(itmuon->innerTrack().isNonnull()) {
-       for (auto itHit = itmuon->innerTrack()->recHitsBegin(); itHit != itmuon->innerTrack()->recHitsEnd(); itHit++) {
+     //We build the transient track of the tracker track and get its final state on surface
+     reco::TransientTrack trackinner(itmuon->innerTrack(), &*theService->magneticField(), theService->trackingGeometry());     
+     TrajectoryStateOnSurface outerTSOS = trackinner.outermostMeasurementState(); 
 
-	 DetId detid = (*itHit)->geographicalId(); 
+     //We also build the transient track of the blobal track
+     reco::TransientTrack track(itmuon->globalTrack(), &*theService->magneticField(), theService->trackingGeometry());     
 
-	 LocalPoint lp = (*itHit)->localPosition();
-	 //LocalError le = (*itHit)->localPositionError();
+     //We make a map in which to store a vector of trackingrechits per detector in the muon system
+     std::map<const GeomDet*, std::vector<TrackingRecHit *> > DetRecHitMap; 
 
-	 Hit_lpX.push_back(lp.x());
-	 Hit_lpY.push_back(lp.y());
-	 Hit_lpZ.push_back(lp.z());
-
-	 
+     for (auto itHit = track.recHitsBegin(); itHit != track.recHitsEnd(); itHit++) {
+        //Only valid hits     
+        if(!(*itHit)->isValid()) continue;
+        DetId myDet = (*itHit)->geographicalId();
+        //Only if the hit is in the muon system
+        if(!(myDet.det() == DetId::Muon)) continue;
+        //Only if it's a DT or CSC
+        if(!(myDet.subdetId() == MuonSubdetId::DT || myDet.subdetId() == MuonSubdetId::CSC)) continue;
+        //Get the GeomDet associated to this DetIt 
+        const GeomDet *geomDet = theService->trackingGeometry()->idToDet(myDet);
+        //Is it already in the map?
+        std::map<const GeomDet*, std::vector<TrackingRecHit *> >::iterator it = DetRecHitMap.find(geomDet);
+        if(it == DetRecHitMap.end()) {
+            //No -> we create a pair of GeomDet and vector of hits, and put the hit in the vector.
+            std::vector<TrackingRecHit *> trhit;
+            trhit.push_back(*itHit);
+            DetRecHitMap.insert(std::pair<const GeomDet*, std::vector<TrackingRecHit *> > (geomDet, trhit));
+        } else { 
+            //Yes -> we just put the hit in the corresponding hit vector.
+            it->second.push_back(*itHit);
+        }
+     }
+     
+     //Now we do the extrapolations 
+     for(auto it = DetRecHitMap.begin(); it != DetRecHitMap.end(); it++) {
+         //Propagate
+         std::pair<TrajectoryStateOnSurface, double> muonState = theService->propagator(propagator_)->propagateWithPath(outerTSOS, it->first->surface());
+         if(muonState.first.isValid()) std::cout << muonState.first.globalPosition() << std::endl;
+         //Here we have everything that we need:
+         //1.- The geomDet in order to the local/global transformations
+         //2.- The extrapolated state at the geomdet
+         //3.- The vector of hits
+     }    
+     //-------------------------------------------------------------------------//
+     //-------------------------------------------------------------------------//
+ 
+     /*	 
 	 if (detid.det() == DetId::Tracker) {
 
 	   const PixelGeomDetUnit* theGeomDet = dynamic_cast<const PixelGeomDetUnit*> (theTracker.idToDet(detid) );
@@ -297,6 +321,7 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
        }
      }
+   */
    }
    // for (auto ittrack=dyttrack->begin(); ittrack != dyttrack->end(); ittrack++){
    //   for (auto itHit = ittrack->recHitsBegin(); itHit != ittrack->recHitsEnd(); itHit++) {
