@@ -13,8 +13,12 @@
 <use name="DataFormats/VertexReco"/>
 <use name="SimDataFormats/GeneratorProducts"/>
 <use name="DataFormats/BeamSpot"/>
+<use name="TrackingTools/TrackRefitter"/>
 <use name="TrackingTools/TransientTrack"/>
+<use name="TrackingTools/TrajectoryState"/>
+<use name="TrackingTools/PatternTools"/>
 <use name="TrackingTools/Records"/>
+<use name="RecoMuon/TrackingTools"/>
 <use name="RecoVertex/VertexPrimitives"/>
 <use name="RecoVertex/AdaptiveVertexFit"/>
 <use name="RecoVertex/TrimmedVertexFit"/>
