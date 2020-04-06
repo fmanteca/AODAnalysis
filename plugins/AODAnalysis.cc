@@ -68,6 +68,7 @@
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 #include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "TrackingTools/TrackFitters/interface/TrajectoryFitter.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 
 #include <string>
 #include <iostream>
@@ -135,11 +136,15 @@ class AODAnalysis : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       virtual void endJob() override;
 
       std::string output_filename;
-      edm::ParameterSet parameters;
+
+      edm::InputTag theDTSegmentLabel, theCSCSegmentLabel;
+      edm::EDGetTokenT<DTRecSegment4DCollection> dtSegmentsToken;
+      edm::EDGetTokenT<CSCSegmentCollection> cscSegmentsToken;
 
       edm::EDGetTokenT<edm::View<reco::Muon> > theMuonCollection;
-
+      
       std::string propagator_;
+      edm::ParameterSet parameters;
       MuonServiceProxy *theService;
   
 };
@@ -156,6 +161,12 @@ AODAnalysis::AODAnalysis(const edm::ParameterSet& iConfig)
    propagator_ = iConfig.getParameter<std::string>("Propagator");
    edm::ParameterSet serviceParameters = iConfig.getParameter<edm::ParameterSet>("ServiceParameters");
    theService = new MuonServiceProxy(serviceParameters);
+
+   theDTSegmentLabel = iConfig.getParameter<edm::InputTag>("segmentsDt");
+   theCSCSegmentLabel = iConfig.getParameter<edm::InputTag>("segmentsCSC");
+   dtSegmentsToken = consumes<DTRecSegment4DCollection>(theDTSegmentLabel);
+   cscSegmentsToken = consumes<CSCSegmentCollection>(theCSCSegmentLabel);
+
 }
 
 //=======================================================================================================================================================================================================================//
@@ -176,6 +187,12 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    
    edm::Handle<edm::View<reco::Muon> > muons;
    iEvent.getByToken(theMuonCollection, muons);
+
+   edm::Handle<DTRecSegment4DCollection> dtSegments;
+   iEvent.getByToken(dtSegmentsToken, dtSegments);
+
+   edm::Handle<CSCSegmentCollection> cscSegments;
+   iEvent.getByToken(cscSegmentsToken, cscSegments);
 
    //-------------------------------------------------------------------------//
    //------------------------Added by Pablo-----------------------------------//
@@ -284,7 +301,52 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
             it->second.push_back(*itHit);
         }
      }
-     
+
+     std::map<const GeomDet*, std::vector<const TrackingRecHit *> > DetAllSegmentsMap; 
+
+     for(auto ittrack = DetRecHitMap.begin(); ittrack != DetRecHitMap.end(); ittrack++) {
+
+        DetId originalDet = ittrack->first->geographicalId();
+        for (auto itHit = dtSegments->begin(); itHit != dtSegments->end(); itHit++) {
+           //Only valid hits     
+           if(!itHit->isValid()) continue;
+           DetId myDet = itHit->geographicalId();
+           if(myDet != originalDet) continue;
+           //Get the GeomDet associated to this DetIt 
+           std::map<const GeomDet*, std::vector<const TrackingRecHit *> >::iterator it = DetAllSegmentsMap.find(ittrack->first);
+           if(it == DetAllSegmentsMap.end()) {
+               //No -> we create a pair of GeomDet and vector of hits, and put the hit in the vector.
+               std::vector<const TrackingRecHit *> trhit;
+               const TrackingRecHit *rechitref = (const TrackingRecHit *)&(*itHit);
+               trhit.push_back(rechitref);
+               DetAllSegmentsMap.insert(std::pair<const GeomDet*, std::vector<const TrackingRecHit *> > (ittrack->first, trhit));
+           } else {
+               //Yes -> we just put the hit in the corresponding hit vector.
+               const TrackingRecHit *rechitref = (const TrackingRecHit *) &(*itHit);
+               it->second.push_back(rechitref);
+           }
+        }
+        for (auto itHit = cscSegments->begin(); itHit != cscSegments->end(); itHit++) {
+           //Only valid hits     
+           if(!itHit->isValid()) continue;
+           DetId myDet = itHit->geographicalId();
+           if(myDet != originalDet) continue;
+           //Get the GeomDet associated to this DetIt 
+           std::map<const GeomDet*, std::vector<const TrackingRecHit *> >::iterator it = DetAllSegmentsMap.find(ittrack->first);
+           if(it == DetAllSegmentsMap.end()) {
+               //No -> we create a pair of GeomDet and vector of hits, and put the hit in the vector.
+               std::vector<const TrackingRecHit *> trhit;
+               const TrackingRecHit *rechitref = (const TrackingRecHit *)&(*itHit);
+               trhit.push_back(rechitref);
+               DetAllSegmentsMap.insert(std::pair<const GeomDet*, std::vector<const TrackingRecHit *> > (ittrack->first, trhit));
+           } else {
+               //Yes -> we just put the hit in the corresponding hit vector.
+               const TrackingRecHit *rechitref = (const TrackingRecHit *) &(*itHit);
+               it->second.push_back(rechitref);
+           }
+        }
+     }
+
      //Now we do the extrapolations 
      for(auto it = DetRecHitMap.begin(); it != DetRecHitMap.end(); it++) {
          //Propagate
