@@ -73,7 +73,7 @@
 #include "TLorentzVector.h"
 #include "TTree.h"
 #include "TFile.h"
-
+#include "TMath.h"
 //=======================================================================================================================================================================================================================//
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -256,9 +256,10 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
    for (auto itmuon=muons->begin(); itmuon != muons->end(); itmuon++){
 
-     iMuon++;
+     if(!(itmuon->innerTrack().isNonnull() && itmuon->globalTrack().isNonnull())){continue;}
+     if(itmuon->globalTrack()->pt() < 200.){continue;} // High-pT muons
 
-     if(!(itmuon->innerTrack().isNonnull() && itmuon->globalTrack().isNonnull())){iMuon--;continue;}
+     iMuon++;
 
      // Store Muon_* variables
      (itmuon->globalTrack().isNonnull())?Muon_GlbTrack_pt.push_back(itmuon->globalTrack()->pt()):Muon_GlbTrack_pt.push_back(-9999.);
@@ -281,6 +282,43 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
      (itmuon->tunePMuonBestTrack().isNonnull())?Muon_TunePTrack_phi.push_back(itmuon->tunePMuonBestTrack()->phi()):Muon_TunePTrack_phi.push_back(-9999.);
      (itmuon->tunePMuonBestTrack().isNonnull())?Muon_TunePTrack_charge.push_back(itmuon->tunePMuonBestTrack()->charge()):Muon_TunePTrack_charge.push_back(-9999.);
      (itmuon->tunePMuonBestTrack().isNonnull())?Muon_TunePTrack_Chindf.push_back(itmuon->tunePMuonBestTrack()->chi2()/(float)itmuon->tunePMuonBestTrack()->ndof()):Muon_TunePTrack_Chindf.push_back(-9999.);
+
+     std::vector<float> temp_x;
+     std::vector<float> temp_y;
+     std::vector<float> temp_z;
+     std::vector<float> temp_prop_x;
+     std::vector<float> temp_prop_y;
+     std::vector<float> temp_prop_z;
+     std::vector<int> temp_subdetid;
+     std::vector<int> temp_DT_station;
+     std::vector<int> temp_DT_layer;
+     std::vector<int> temp_DT_superlayer;
+     std::vector<int> temp_DT_wheel;
+     std::vector<int> temp_DT_sector;
+     std::vector<int> temp_CSC_endcap;
+     std::vector<int> temp_CSC_station;
+     std::vector<int> temp_CSC_ringN;
+     std::vector<int> temp_CSC_chamber;
+     std::vector<int> temp_CSC_layer;
+
+     std::vector<float> temp_all_x;
+     std::vector<float> temp_all_y;
+     std::vector<float> temp_all_z;
+     std::vector<float> temp_all_prop_x;
+     std::vector<float> temp_all_prop_y;
+     std::vector<float> temp_all_prop_z;
+     std::vector<int> temp_all_subdetid;
+     std::vector<int> temp_all_DT_station;
+     std::vector<int> temp_all_DT_layer;
+     std::vector<int> temp_all_DT_superlayer;
+     std::vector<int> temp_all_DT_wheel;
+     std::vector<int> temp_all_DT_sector;
+     std::vector<int> temp_all_CSC_endcap;
+     std::vector<int> temp_all_CSC_station;
+     std::vector<int> temp_all_CSC_ringN;
+     std::vector<int> temp_all_CSC_chamber;
+     std::vector<int> temp_all_CSC_layer;
+
 
 
      //-------------------------------------------------------------------------//
@@ -315,11 +353,92 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
             std::vector<TrackingRecHit *> trhit;
             trhit.push_back(*itHit);
             DetRecHitMap.insert(std::pair<const GeomDet*, std::vector<TrackingRecHit *> > (geomDet, trhit));
+
+	    temp_x.push_back((*itHit)->localPosition().x()); 
+	    temp_y.push_back((*itHit)->localPosition().y()); 
+            temp_z.push_back((*itHit)->localPosition().z()); 
+            temp_subdetid.push_back(geomDet->geographicalId().subdetId());
+	    if((*itHit)->geographicalId().subdetId() == MuonSubdetId::CSC){
+	      CSCDetId id((*itHit)->geographicalId().rawId());
+	      temp_CSC_endcap.push_back(id.endcap());
+	      temp_CSC_station.push_back(id.station());
+	      temp_CSC_ringN.push_back(id.ring());
+	      temp_CSC_chamber.push_back(id.chamber());
+	      temp_CSC_layer.push_back(id.layer());
+	      temp_DT_station.push_back(-9999);
+	      temp_DT_layer.push_back(-9999);
+	      temp_DT_superlayer.push_back(-9999);
+	      temp_DT_wheel.push_back(-9999);
+	      temp_DT_sector.push_back(-9999);
+	      
+	    }else if((*itHit)->geographicalId().subdetId() == MuonSubdetId::DT){
+	      DTWireId id((*itHit)->geographicalId().rawId());
+	      temp_CSC_endcap.push_back(-9999);
+	      temp_CSC_station.push_back(-9999);
+	      temp_CSC_ringN.push_back(-9999);
+	      temp_CSC_chamber.push_back(-9999);
+	      temp_CSC_layer.push_back(-9999);
+	      temp_DT_station.push_back(id.station());
+	      temp_DT_layer.push_back(id.layer());
+	      temp_DT_superlayer.push_back(id.superLayer());
+	      temp_DT_wheel.push_back(id.wheel());
+	      temp_DT_sector.push_back(id.sector());
+	    }
+
         } else { 
             //Yes -> we just put the hit in the corresponding hit vector.
-            it->second.push_back(*itHit);
-        }
+	  it->second.push_back(*itHit);
+
+	  temp_x.push_back((*itHit)->localPosition().x()); 
+	  temp_y.push_back((*itHit)->localPosition().y()); 
+	  temp_z.push_back((*itHit)->localPosition().z()); 
+	  temp_subdetid.push_back(geomDet->geographicalId().subdetId());
+	  if((*itHit)->geographicalId().subdetId() == MuonSubdetId::CSC){
+	    CSCDetId id((*itHit)->geographicalId().rawId());
+	    temp_CSC_endcap.push_back(id.endcap());
+	    temp_CSC_station.push_back(id.station());
+	    temp_CSC_ringN.push_back(id.ring());
+	    temp_CSC_chamber.push_back(id.chamber());
+	    temp_CSC_layer.push_back(id.layer());
+	    temp_DT_station.push_back(-9999);
+	    temp_DT_layer.push_back(-9999);
+	    temp_DT_superlayer.push_back(-9999);
+	    temp_DT_wheel.push_back(-9999);
+	    temp_DT_sector.push_back(-9999);
+	    
+	  }else if((*itHit)->geographicalId().subdetId() == MuonSubdetId::DT){
+	    DTWireId id((*itHit)->geographicalId().rawId());
+	    temp_CSC_endcap.push_back(-9999);
+	    temp_CSC_station.push_back(-9999);
+	    temp_CSC_ringN.push_back(-9999);
+	    temp_CSC_chamber.push_back(-9999);
+	    temp_CSC_layer.push_back(-9999);
+	    temp_DT_station.push_back(id.station());
+	    temp_DT_layer.push_back(id.layer());
+	    temp_DT_superlayer.push_back(id.superLayer());
+	    temp_DT_wheel.push_back(id.wheel());
+	    temp_DT_sector.push_back(id.sector());
+	  }
+
+	}
      }
+
+
+     Hit_GlbTrack_x.push_back(temp_x);
+     Hit_GlbTrack_y.push_back(temp_y);
+     Hit_GlbTrack_z.push_back(temp_z);
+     Hit_GlbTrack_subdetid.push_back(temp_subdetid);
+     Hit_GlbTrack_DT_station.push_back(temp_DT_station);
+     Hit_GlbTrack_DT_layer.push_back(temp_DT_layer);
+     Hit_GlbTrack_DT_superlayer.push_back(temp_DT_superlayer);
+     Hit_GlbTrack_DT_wheel.push_back(temp_DT_wheel);
+     Hit_GlbTrack_DT_sector.push_back(temp_DT_sector);
+     Hit_GlbTrack_CSC_endcap.push_back(temp_CSC_endcap);
+     Hit_GlbTrack_CSC_station.push_back(temp_CSC_station);
+     Hit_GlbTrack_CSC_ringN.push_back(temp_CSC_ringN);
+     Hit_GlbTrack_CSC_chamber.push_back(temp_CSC_chamber);
+     Hit_GlbTrack_CSC_layer.push_back(temp_CSC_layer);
+
 
      std::map<const GeomDet*, std::vector<const TrackingRecHit *> > DetAllSegmentsMap; 
 
@@ -358,66 +477,97 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
                const TrackingRecHit *rechitref = (const TrackingRecHit *)&(*itHit);
                trhit.push_back(rechitref);
                DetAllSegmentsMap.insert(std::pair <const GeomDet*, std::vector<const TrackingRecHit *> > (ittrack->first, trhit));
+
+	       temp_all_x.push_back(rechitref->localPosition().x()); 
+	       temp_all_y.push_back(rechitref->localPosition().y()); 
+	       temp_all_z.push_back(rechitref->localPosition().z()); 
+	       temp_all_subdetid.push_back(ittrack->first->geographicalId().subdetId());
+	       if(rechitref->geographicalId().subdetId() == MuonSubdetId::CSC){
+		 CSCDetId id(rechitref->geographicalId().rawId());
+		 temp_all_CSC_endcap.push_back(id.endcap());
+		 temp_all_CSC_station.push_back(id.station());
+		 temp_all_CSC_ringN.push_back(id.ring());
+		 temp_all_CSC_chamber.push_back(id.chamber());
+		 temp_all_CSC_layer.push_back(id.layer());
+		 temp_all_DT_station.push_back(-9999);
+		 temp_all_DT_layer.push_back(-9999);
+		 temp_all_DT_superlayer.push_back(-9999);
+		 temp_all_DT_wheel.push_back(-9999);
+		 temp_all_DT_sector.push_back(-9999);
+		 
+	       }else if(rechitref->geographicalId().subdetId() == MuonSubdetId::DT){
+		 DTWireId id(rechitref->geographicalId().rawId());
+		 temp_all_CSC_endcap.push_back(-9999);
+		 temp_all_CSC_station.push_back(-9999);
+		 temp_all_CSC_ringN.push_back(-9999);
+		 temp_all_CSC_chamber.push_back(-9999);
+		 temp_all_CSC_layer.push_back(-9999);
+		 temp_all_DT_station.push_back(id.station());
+		 temp_all_DT_layer.push_back(id.layer());
+		 temp_all_DT_superlayer.push_back(id.superLayer());
+		 temp_all_DT_wheel.push_back(id.wheel());
+		 temp_all_DT_sector.push_back(id.sector());
+	       }
+	       
            } else {
                //Yes -> we just put the hit in the corresponding hit vector.
                const TrackingRecHit *rechitref = (const TrackingRecHit *) &(*itHit);
                it->second.push_back(rechitref);
+
+	       temp_all_x.push_back(rechitref->localPosition().x()); 
+	       temp_all_y.push_back(rechitref->localPosition().y()); 
+	       temp_all_z.push_back(rechitref->localPosition().z()); 
+	       temp_all_subdetid.push_back(ittrack->first->geographicalId().subdetId());
+	       if(rechitref->geographicalId().subdetId() == MuonSubdetId::CSC){
+		 CSCDetId id(rechitref->geographicalId().rawId());
+		 temp_all_CSC_endcap.push_back(id.endcap());
+		 temp_all_CSC_station.push_back(id.station());
+		 temp_all_CSC_ringN.push_back(id.ring());
+		 temp_all_CSC_chamber.push_back(id.chamber());
+		 temp_all_CSC_layer.push_back(id.layer());
+		 temp_all_DT_station.push_back(-9999);
+		 temp_all_DT_layer.push_back(-9999);
+		 temp_all_DT_superlayer.push_back(-9999);
+		 temp_all_DT_wheel.push_back(-9999);
+		 temp_all_DT_sector.push_back(-9999);
+		 
+	       }else if(rechitref->geographicalId().subdetId() == MuonSubdetId::DT){
+		 DTWireId id(rechitref->geographicalId().rawId());
+		 temp_all_CSC_endcap.push_back(-9999);
+		 temp_all_CSC_station.push_back(-9999);
+		 temp_all_CSC_ringN.push_back(-9999);
+		 temp_all_CSC_chamber.push_back(-9999);
+		 temp_all_CSC_layer.push_back(-9999);
+		 temp_all_DT_station.push_back(id.station());
+		 temp_all_DT_layer.push_back(id.layer());
+		 temp_all_DT_superlayer.push_back(id.superLayer());
+		 temp_all_DT_wheel.push_back(id.wheel());
+		 temp_all_DT_sector.push_back(id.sector());
+	       }
+	       
            }
         }
      }
 
-     std::vector<float> temp_x;
-     std::vector<float> temp_y;
-     std::vector<float> temp_z;
-     std::vector<float> temp_prop_x;
-     std::vector<float> temp_prop_y;
-     std::vector<float> temp_prop_z;
-     std::vector<int> temp_subdetid;
-     std::vector<int> temp_DT_station;
-     std::vector<int> temp_DT_layer;
-     std::vector<int> temp_DT_superlayer;
-     std::vector<int> temp_DT_wheel;
-     std::vector<int> temp_DT_sector;
-     std::vector<int> temp_CSC_endcap;
-     std::vector<int> temp_CSC_station;
-     std::vector<int> temp_CSC_ringN;
-     std::vector<int> temp_CSC_chamber;
-     std::vector<int> temp_CSC_layer;
+
+     Hit_DetAll_x.push_back(temp_all_x);
+     Hit_DetAll_y.push_back(temp_all_y);
+     Hit_DetAll_z.push_back(temp_all_z);
+     Hit_DetAll_subdetid.push_back(temp_all_subdetid);
+     Hit_DetAll_DT_station.push_back(temp_all_DT_station);
+     Hit_DetAll_DT_layer.push_back(temp_all_DT_layer);
+     Hit_DetAll_DT_superlayer.push_back(temp_all_DT_superlayer);
+     Hit_DetAll_DT_wheel.push_back(temp_all_DT_wheel);
+     Hit_DetAll_DT_sector.push_back(temp_all_DT_sector);
+     Hit_DetAll_CSC_endcap.push_back(temp_all_CSC_endcap);
+     Hit_DetAll_CSC_station.push_back(temp_all_CSC_station);
+     Hit_DetAll_CSC_ringN.push_back(temp_all_CSC_ringN);
+     Hit_DetAll_CSC_chamber.push_back(temp_all_CSC_chamber);
+     Hit_DetAll_CSC_layer.push_back(temp_all_CSC_layer);
+
  
      //Now we do the extrapolations 
      for(auto it = DetRecHitMap.begin(); it != DetRecHitMap.end(); it++) {
-       for(int i=0; i<(int)(*it).second.size(); i++){
-	 temp_x.push_back((*it).second.at(i)->localPosition().x()); 
-	 temp_y.push_back((*it).second.at(i)->localPosition().y()); 
-	 temp_z.push_back((*it).second.at(i)->localPosition().z()); 
-	 temp_subdetid.push_back((*it).first->geographicalId().subdetId());
-	 if((*it).first->geographicalId().subdetId() == MuonSubdetId::CSC){
-	   CSCDetId id((*it).first->geographicalId().rawId());
-	   temp_CSC_endcap.push_back(id.endcap());
-	   temp_CSC_station.push_back(id.station());
-	   temp_CSC_ringN.push_back(id.ring());
-	   temp_CSC_chamber.push_back(id.chamber());
-	   temp_CSC_layer.push_back(id.layer());
-	   temp_DT_station.push_back(-9999);
-	   temp_DT_layer.push_back(-9999);
-	   temp_DT_superlayer.push_back(-9999);
-	   temp_DT_wheel.push_back(-9999);
-	   temp_DT_sector.push_back(-9999);
-
-	 }else if((*it).first->geographicalId().subdetId() == MuonSubdetId::DT){
-	   DTWireId id((*it).first->geographicalId().rawId());
-	   temp_CSC_endcap.push_back(-9999);
-	   temp_CSC_station.push_back(-9999);
-	   temp_CSC_ringN.push_back(-9999);
-	   temp_CSC_chamber.push_back(-9999);
-	   temp_CSC_layer.push_back(-9999);
-	   temp_DT_station.push_back(id.station());
-	   temp_DT_layer.push_back(id.layer());
-	   temp_DT_superlayer.push_back(id.superLayer());
-	   temp_DT_wheel.push_back(id.wheel());
-	   temp_DT_sector.push_back(id.sector());
-	 }
-       }
        //std::cout << "Hit local position" << (*it).second.at(0)->localPosition() << std::endl;
        //std::cout << "Det ID" << (*it).first->geographicalId().subdetId() << std::endl;
          //Propagate
@@ -440,24 +590,9 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
          //3.- The vector of hits
      }    
 
-     Hit_GlbTrack_x.push_back(temp_x);
-     Hit_GlbTrack_y.push_back(temp_y);
-     Hit_GlbTrack_z.push_back(temp_z);
-     Hit_GlbTrack_subdetid.push_back(temp_subdetid);
-     Hit_GlbTrack_DT_station.push_back(temp_DT_station);
-     Hit_GlbTrack_DT_layer.push_back(temp_DT_layer);
-     Hit_GlbTrack_DT_superlayer.push_back(temp_DT_superlayer);
-     Hit_GlbTrack_DT_wheel.push_back(temp_DT_wheel);
-     Hit_GlbTrack_DT_sector.push_back(temp_DT_sector);
-     Hit_GlbTrack_CSC_endcap.push_back(temp_CSC_endcap);
-     Hit_GlbTrack_CSC_station.push_back(temp_CSC_station);
-     Hit_GlbTrack_CSC_ringN.push_back(temp_CSC_ringN);
-     Hit_GlbTrack_CSC_chamber.push_back(temp_CSC_chamber);
-     Hit_GlbTrack_CSC_layer.push_back(temp_CSC_layer);
      Hit_prop_x.push_back(temp_prop_x);
      Hit_prop_y.push_back(temp_prop_y);
      Hit_prop_z.push_back(temp_prop_z);
-
 
      temp_x.clear();
      temp_y.clear();
@@ -476,72 +611,60 @@ void AODAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
      temp_CSC_ringN.clear();
      temp_CSC_chamber.clear();
      temp_CSC_layer.clear();
-
-     for(auto it = DetAllSegmentsMap.begin(); it != DetAllSegmentsMap.end(); it++) {
-       for(int i=0; i<(int)(*it).second.size(); i++){
-	 temp_x.push_back((*it).second.at(i)->localPosition().x()); 
-	 temp_y.push_back((*it).second.at(i)->localPosition().y()); 
-	 temp_z.push_back((*it).second.at(i)->localPosition().z()); 
-	 temp_subdetid.push_back((*it).first->geographicalId().subdetId());
-	 if((*it).first->geographicalId().subdetId() == MuonSubdetId::CSC){
-	   CSCDetId id((*it).first->geographicalId().rawId());
-	   temp_CSC_endcap.push_back(id.endcap());
-	   temp_CSC_station.push_back(id.station());
-	   temp_CSC_ringN.push_back(id.ring());
-	   temp_CSC_chamber.push_back(id.chamber());
-	   temp_CSC_layer.push_back(id.layer());
-	   temp_DT_station.push_back(-9999);
-	   temp_DT_layer.push_back(-9999);
-	   temp_DT_superlayer.push_back(-9999);
-	   temp_DT_wheel.push_back(-9999);
-	   temp_DT_sector.push_back(-9999);
-
-	 }else if((*it).first->geographicalId().subdetId() == MuonSubdetId::DT){
-	   DTWireId id((*it).first->geographicalId().rawId());
-	   temp_CSC_endcap.push_back(-9999);
-	   temp_CSC_station.push_back(-9999);
-	   temp_CSC_ringN.push_back(-9999);
-	   temp_CSC_chamber.push_back(-9999);
-	   temp_CSC_layer.push_back(-9999);
-	   temp_DT_station.push_back(id.station());
-	   temp_DT_layer.push_back(id.layer());
-	   temp_DT_superlayer.push_back(id.superLayer());
-	   temp_DT_wheel.push_back(id.wheel());
-	   temp_DT_sector.push_back(id.sector());
-	 }
-       }
-     }     
-
-     Hit_DetAll_x.push_back(temp_x);
-     Hit_DetAll_y.push_back(temp_y);
-     Hit_DetAll_z.push_back(temp_z);
-     Hit_DetAll_subdetid.push_back(temp_subdetid);
-     Hit_DetAll_DT_station.push_back(temp_DT_station);
-     Hit_DetAll_DT_layer.push_back(temp_DT_layer);
-     Hit_DetAll_DT_superlayer.push_back(temp_DT_superlayer);
-     Hit_DetAll_DT_wheel.push_back(temp_DT_wheel);
-     Hit_DetAll_DT_sector.push_back(temp_DT_sector);
-     Hit_DetAll_CSC_endcap.push_back(temp_CSC_endcap);
-     Hit_DetAll_CSC_station.push_back(temp_CSC_station);
-     Hit_DetAll_CSC_ringN.push_back(temp_CSC_ringN);
-     Hit_DetAll_CSC_chamber.push_back(temp_CSC_chamber);
-     Hit_DetAll_CSC_layer.push_back(temp_CSC_layer);
+     temp_all_x.clear();
+     temp_all_y.clear();
+     temp_all_z.clear();
+     temp_all_prop_x.clear();
+     temp_all_prop_y.clear();
+     temp_all_prop_z.clear();
+     temp_all_subdetid.clear();
+     temp_all_DT_station.clear();
+     temp_all_DT_layer.clear();
+     temp_all_DT_superlayer.clear();
+     temp_all_DT_wheel.clear();
+     temp_all_DT_sector.clear();
+     temp_all_CSC_endcap.clear();
+     temp_all_CSC_station.clear();
+     temp_all_CSC_ringN.clear();
+     temp_all_CSC_chamber.clear();
+     temp_all_CSC_layer.clear();
 
 
-     temp_x.clear();
-     temp_y.clear();
-     temp_z.clear();
-     temp_subdetid.clear();
-     temp_DT_station.clear();
-     temp_DT_layer.clear();
-     temp_DT_superlayer.clear();
-     temp_DT_wheel.clear();
-     temp_DT_sector.clear();
-     temp_CSC_endcap.clear();
-     temp_CSC_station.clear();
-     temp_CSC_ringN.clear();
-     temp_CSC_chamber.clear();
-     temp_CSC_layer.clear();
+     // for(auto it = DetAllSegmentsMap.begin(); it != DetAllSegmentsMap.end(); it++) {
+     //   for(int i=0; i<(int)(*it).second.size(); i++){
+     // 	 temp_x.push_back((*it).second.at(i)->localPosition().x()); 
+     // 	 temp_y.push_back((*it).second.at(i)->localPosition().y()); 
+     // 	 temp_z.push_back((*it).second.at(i)->localPosition().z()); 
+     // 	 temp_subdetid.push_back((*it).first->geographicalId().subdetId());
+     // 	 if((*it).first->geographicalId().subdetId() == MuonSubdetId::CSC){
+     // 	   CSCDetId id((*it).first->geographicalId().rawId());
+     // 	   temp_CSC_endcap.push_back(id.endcap());
+     // 	   temp_CSC_station.push_back(id.station());
+     // 	   temp_CSC_ringN.push_back(id.ring());
+     // 	   temp_CSC_chamber.push_back(id.chamber());
+     // 	   temp_CSC_layer.push_back(id.layer());
+     // 	   temp_DT_station.push_back(-9999);
+     // 	   temp_DT_layer.push_back(-9999);
+     // 	   temp_DT_superlayer.push_back(-9999);
+     // 	   temp_DT_wheel.push_back(-9999);
+     // 	   temp_DT_sector.push_back(-9999);
+
+     // 	 }else if((*it).first->geographicalId().subdetId() == MuonSubdetId::DT){
+     // 	   DTWireId id((*it).first->geographicalId().rawId());
+     // 	   temp_CSC_endcap.push_back(-9999);
+     // 	   temp_CSC_station.push_back(-9999);
+     // 	   temp_CSC_ringN.push_back(-9999);
+     // 	   temp_CSC_chamber.push_back(-9999);
+     // 	   temp_CSC_layer.push_back(-9999);
+     // 	   temp_DT_station.push_back(id.station());
+     // 	   temp_DT_layer.push_back(id.layer());
+     // 	   temp_DT_superlayer.push_back(id.superLayer());
+     // 	   temp_DT_wheel.push_back(id.wheel());
+     // 	   temp_DT_sector.push_back(id.sector());
+     // 	 }
+     //   }
+     // }     
+
 
 
      /*	 
@@ -659,8 +782,6 @@ void AODAnalysis::beginJob()
     tree_out->Branch("Muon_TunePTrack_charge", "vector<float>", &Muon_TunePTrack_charge);
     tree_out->Branch("Muon_TunePTrack_ptErr", "vector<float>", &Muon_TunePTrack_ptErr);
     tree_out->Branch("Muon_TunePTrack_Chindf", "vector<float>", &Muon_TunePTrack_Chindf);
-    // tree_out->Branch("Hit_GlbTrack_DetRecHitMap", "std::vector<std::map<const GeomDet*, std::vector<TrackingRecHit *> > >", &Hit_GlbTrack_DetRecHitMap);
-    // tree_out->Branch("Hit_GlbTrack_DetAllSegmentsMap", "std::vector<std::map<const GeomDet*, std::vector<const TrackingRecHit *> > >", &Hit_GlbTrack_DetAllSegmentsMap);
 
     // ////////////////////////////// HIT BRANCHES //////////////////////////////
 
