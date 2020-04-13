@@ -1,12 +1,12 @@
-# Muon high-pT variables ntupler (AOD format)
+# Muon high-pT variables ntupler (RECO format)
 
 This framework is devoted to get the relevant collections from AOD and put them into plain trees.
 
 ## Installation
 
-cmsrel CMSSW_10_6_0_patch2
+cmsrel CMSSW_9_4_4
 
-cd CMSSW_10_6_0_patch2/src
+cd CMSSW_9_4_4/src
 
 cmsenv
 
@@ -14,10 +14,10 @@ mkdir MyAnalysis
 
 cd MyAnalysis
 
-git clone https://github.com/fmanteca/AODAnalysis.git
+git clone https://github.com/fmanteca/RECOAnalysis.git
 
-cd AODAnalysis/test
+cd RECOAnalysis/test
 
-cmsRun runAODAnalysis_cfg.py
+cmsRun runRECOAnalysis_cfg.py
 
 
