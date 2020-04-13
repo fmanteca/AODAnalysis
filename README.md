@@ -1,6 +1,6 @@
 # Muon high-pT variables ntupler (RECO format)
 
-This framework is devoted to get the relevant collections from AOD and put them into plain trees.
+This framework is devoted to get the relevant collections from RECO-SIM and put them into plain trees.
 
 ## Installation
 
