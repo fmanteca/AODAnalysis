@@ -757,7 +757,9 @@ void RECOAnalysis::beginJob()
 {
 
     // Output file definition
-    output_filename = parameters.getParameter<std::string>("nameOfOutput");
+    // edm::Service<TFileService> *file_out;
+    // output_filename = parameters.getParameter<std::string>("nameOfOutput");
+    // tree_out = file_out->make<TTree>("Events","Events");
     file_out = new TFile(output_filename.c_str(), "RECREATE");
     file_out->cd();
 
