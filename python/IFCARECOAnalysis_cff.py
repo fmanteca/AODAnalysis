@@ -5,7 +5,7 @@ from RecoMuon.TrackingTools.MuonTrackLoader_cff import *
 
 RECOanalyzer = cms.EDAnalyzer('RECOAnalysis',
     MuonServiceProxy,
-    nameOfOutput = cms.string('outputRECO.root'),
+    nameOfOutput = cms.string('tree.root'),
     MuonCollection = cms.InputTag("muons"),
     Propagator = cms.string('SmartPropagatorAny'),
     segmentsDt = cms.InputTag('dt4DSegments'),
