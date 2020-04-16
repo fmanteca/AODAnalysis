@@ -133,6 +133,7 @@ std::vector<float> Muon_TunePTrack_charge;
 std::vector<float> Muon_TunePTrack_ptErr;
 std::vector<float> Muon_TunePTrack_Chindf;
 
+Int_t nHits_Track;
 std::vector<std::vector<float> > Hit_Track_x;
 std::vector<std::vector<float> > Hit_Track_y;
 std::vector<std::vector<float> > Hit_Track_z;
@@ -151,6 +152,7 @@ std::vector<std::vector<float> > Hit_prop_x;
 std::vector<std::vector<float> > Hit_prop_y;
 std::vector<std::vector<float> > Hit_prop_z;
 
+Int_t nHits_DetAll;
 std::vector<std::vector<float> > Hit_DetAll_x;
 std::vector<std::vector<float> > Hit_DetAll_y;
 std::vector<std::vector<float> > Hit_DetAll_z;
@@ -264,6 +266,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    ///////////////////////////////// GET MUON VARIABLES ////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
    int iMuon = 0;
+   int iHit_Track = 0;
+   int iHit_DetAll = 0;
 
    for (auto itmuon=muons->begin(); itmuon != muons->end(); itmuon++){
 
@@ -346,6 +350,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      //We make a map in which to store a vector of trackingrechits per detector in the muon system
      std::map<const GeomDet*, std::vector<TrackingRecHit *> > DetRecHitMap; 
 
+     iHit_Track=0;
+
      for (auto itHit = track.recHitsBegin(); itHit != track.recHitsEnd(); itHit++) {
        //Hit_muonLink.push_back(iMuon); //meter en el std::map el muonLink como third element
         //Only valid hits     
@@ -355,6 +361,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         if(!(myDet.det() == DetId::Muon)) continue;
         //Only if it's a DT or CSC
         if(!(myDet.subdetId() == MuonSubdetId::DT || myDet.subdetId() == MuonSubdetId::CSC)) continue;
+	iHit_Track++;
         //Get the GeomDet associated to this DetIt 
         const GeomDet *geomDet = theService->trackingGeometry()->idToDet(myDet);
         //Is it already in the map?
@@ -453,6 +460,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
      std::map<const GeomDet*, std::vector<const TrackingRecHit *> > DetAllSegmentsMap; 
 
+     iHit_DetAll=0;
      for(auto ittrack = DetRecHitMap.begin(); ittrack != DetRecHitMap.end(); ittrack++) {
 
         DetId originalDet = ittrack->first->geographicalId();
@@ -461,6 +469,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
            if(!itHit->isValid()) continue;
            DetId myDet = itHit->geographicalId();
            if(myDet != originalDet) continue;
+	   iHit_DetAll++;
            //Get the GeomDet associated to this DetIt 
            std::map<const GeomDet*, std::vector<const TrackingRecHit *> >::iterator it = DetAllSegmentsMap.find(ittrack->first);
            if(it == DetAllSegmentsMap.end()) {
@@ -480,6 +489,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
            if(!itHit->isValid()) continue;
            DetId myDet = itHit->geographicalId();
            if(myDet != originalDet) continue;
+	   iHit_DetAll++;
            //Get the GeomDet associated to this DetIt 
            std::map<const GeomDet*, std::vector<const TrackingRecHit *> >::iterator it = DetAllSegmentsMap.find(ittrack->first);
            if(it == DetAllSegmentsMap.end()) {
@@ -699,6 +709,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    /////////////////////////////////// FILL THE TREE ///////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
    nMuons = iMuon;
+   nHits_Track = iHit_Track;
+   nHits_DetAll = iHit_DetAll;
    tree_out->Fill();
    Muon_GlbTrack_pt.clear();
    Muon_GlbTrack_eta.clear();
@@ -757,9 +769,6 @@ void RECOAnalysis::beginJob()
 {
 
     // Output file definition
-    // edm::Service<TFileService> *file_out;
-    // output_filename = parameters.getParameter<std::string>("nameOfOutput");
-    // tree_out = file_out->make<TTree>("Events","Events");
     file_out = new TFile(output_filename.c_str(), "RECREATE");
     file_out->cd();
 
@@ -798,6 +807,7 @@ void RECOAnalysis::beginJob()
 
     // ////////////////////////////// HIT BRANCHES //////////////////////////////
 
+   tree_out->Branch("nHits_Track", &nHits_Track, "nHits_Track/I");
    tree_out->Branch("Hit_Track_x", "vector<vector<float> >", &Hit_Track_x);
    tree_out->Branch("Hit_Track_y", "vector<vector<float> >", &Hit_Track_y);
    tree_out->Branch("Hit_Track_z", "vector<vector<float> >", &Hit_Track_z);
@@ -817,6 +827,7 @@ void RECOAnalysis::beginJob()
    tree_out->Branch("Hit_prop_y", "vector<vector<float> >", &Hit_prop_y);
    tree_out->Branch("Hit_prop_z", "vector<vector<float> >", &Hit_prop_z);
 
+   tree_out->Branch("nHits_DetAll", &nHits_DetAll, "nHits_DetAll/I");
    tree_out->Branch("Hit_DetAll_x", "vector<vector<float> >", &Hit_DetAll_x);
    tree_out->Branch("Hit_DetAll_y", "vector<vector<float> >", &Hit_DetAll_y);
    tree_out->Branch("Hit_DetAll_z", "vector<vector<float> >", &Hit_DetAll_z);

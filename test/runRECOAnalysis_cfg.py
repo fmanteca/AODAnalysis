@@ -39,9 +39,9 @@ process.source = cms.Source("PoolSource",
     )
 )
 
-process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string('tree.root')
-)
+# process.TFileService = cms.Service("TFileService",
+#                                    fileName = cms.string('tree.root')
+# )
 
 
 process.p = cms.Path(process.RECOanalyzer)

@@ -12,6 +12,7 @@ config.JobType.pluginName  = 'Analysis'
 config.JobType.psetName = 'runRECOAnalysis_cfg.py'
 #config.JobType.maxMemoryMB = 5000
 #config.JobType.numCores = 8
+config.JobType.outputFiles = ['tree.root']
 
 config.section_("Data")
 config.Data.splitting   = 'FileBased'
