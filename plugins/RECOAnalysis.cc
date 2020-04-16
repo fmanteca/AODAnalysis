@@ -769,6 +769,7 @@ void RECOAnalysis::beginJob()
 {
 
     // Output file definition
+    output_filename = parameters.getParameter<std::string>("nameOfOutput");
     file_out = new TFile(output_filename.c_str(), "RECREATE");
     file_out->cd();
 
