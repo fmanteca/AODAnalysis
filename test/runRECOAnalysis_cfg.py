@@ -2,7 +2,6 @@ import FWCore.ParameterSet.Config as cms
 
 from Configuration.StandardSequences.Eras import eras
 
-
 process = cms.Process("Demo", eras.Phase2)
 
 process.load('Configuration.StandardSequences.Services_cff')
@@ -25,7 +24,6 @@ process.load('Configuration.StandardSequences.Validation_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load("TrackingTools.TransientTrack.TransientTrackBuilder_cfi")
 
-
 # import of standard configurations
 process.load("MyAnalysis.RECOAnalysis.IFCARECOAnalysis_cff")
 
@@ -38,11 +36,6 @@ process.source = cms.Source("PoolSource",
         'file:/gpfs/projects/cms/fernanpe/MUO-RunIIFall17DRPremix-00025.root'
     )
 )
-
-# process.TFileService = cms.Service("TFileService",
-#                                    fileName = cms.string('tree.root')
-# )
-
 
 process.p = cms.Path(process.RECOanalyzer)
 

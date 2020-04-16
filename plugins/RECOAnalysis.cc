@@ -133,7 +133,7 @@ std::vector<float> Muon_TunePTrack_charge;
 std::vector<float> Muon_TunePTrack_ptErr;
 std::vector<float> Muon_TunePTrack_Chindf;
 
-Int_t nHits_Track;
+std::vector<int> nHits_Track;
 std::vector<std::vector<float> > Hit_Track_x;
 std::vector<std::vector<float> > Hit_Track_y;
 std::vector<std::vector<float> > Hit_Track_z;
@@ -152,7 +152,7 @@ std::vector<std::vector<float> > Hit_prop_x;
 std::vector<std::vector<float> > Hit_prop_y;
 std::vector<std::vector<float> > Hit_prop_z;
 
-Int_t nHits_DetAll;
+std::vector<int> nHits_DetAll;
 std::vector<std::vector<float> > Hit_DetAll_x;
 std::vector<std::vector<float> > Hit_DetAll_y;
 std::vector<std::vector<float> > Hit_DetAll_z;
@@ -441,7 +441,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	}
      }
 
-
+     nHits_Track.push_back(iHit_Track);
      Hit_Track_x.push_back(temp_x);
      Hit_Track_y.push_back(temp_y);
      Hit_Track_z.push_back(temp_z);
@@ -570,7 +570,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         }
      }
 
-
+     nHits_DetAll.push_back(iHit_DetAll);
      Hit_DetAll_x.push_back(temp_all_x);
      Hit_DetAll_y.push_back(temp_all_y);
      Hit_DetAll_z.push_back(temp_all_z);
@@ -709,8 +709,6 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    /////////////////////////////////// FILL THE TREE ///////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
    nMuons = iMuon;
-   nHits_Track = iHit_Track;
-   nHits_DetAll = iHit_DetAll;
    tree_out->Fill();
    Muon_GlbTrack_pt.clear();
    Muon_GlbTrack_eta.clear();
@@ -730,6 +728,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Muon_TunePTrack_charge.clear();
    Muon_TunePTrack_ptErr.clear();
    Muon_TunePTrack_Chindf.clear();
+   nHits_Track.clear();
    Hit_Track_x.clear();
    Hit_Track_y.clear();
    Hit_Track_z.clear();
@@ -747,6 +746,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Hit_Track_CSC_ringN.clear();
    Hit_Track_CSC_chamber.clear();
    Hit_Track_CSC_layer.clear();
+   nHits_DetAll.clear();
    Hit_DetAll_x.clear();
    Hit_DetAll_y.clear();
    Hit_DetAll_z.clear();
@@ -808,7 +808,7 @@ void RECOAnalysis::beginJob()
 
     // ////////////////////////////// HIT BRANCHES //////////////////////////////
 
-   tree_out->Branch("nHits_Track", &nHits_Track, "nHits_Track/I");
+   tree_out->Branch("nHits_Track", "vector<int>", &nHits_Track);
    tree_out->Branch("Hit_Track_x", "vector<vector<float> >", &Hit_Track_x);
    tree_out->Branch("Hit_Track_y", "vector<vector<float> >", &Hit_Track_y);
    tree_out->Branch("Hit_Track_z", "vector<vector<float> >", &Hit_Track_z);
@@ -828,7 +828,7 @@ void RECOAnalysis::beginJob()
    tree_out->Branch("Hit_prop_y", "vector<vector<float> >", &Hit_prop_y);
    tree_out->Branch("Hit_prop_z", "vector<vector<float> >", &Hit_prop_z);
 
-   tree_out->Branch("nHits_DetAll", &nHits_DetAll, "nHits_DetAll/I");
+   tree_out->Branch("nHits_DetAll", "vector<int>", &nHits_DetAll);
    tree_out->Branch("Hit_DetAll_x", "vector<vector<float> >", &Hit_DetAll_x);
    tree_out->Branch("Hit_DetAll_y", "vector<vector<float> >", &Hit_DetAll_y);
    tree_out->Branch("Hit_DetAll_z", "vector<vector<float> >", &Hit_DetAll_z);
