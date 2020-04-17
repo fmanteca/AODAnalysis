@@ -47,7 +47,6 @@
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
-#include "RecoMuon/Navigation/interface/MuonNavigationSchool.h"
 #include "Geometry/CommonDetUnit/interface/GeomDet.h"
 #include "Geometry/CommonDetUnit/interface/GeomDetEnumerators.h"
 
@@ -86,6 +85,8 @@
 #include "TTree.h"
 #include "TFile.h"
 #include "TMath.h"
+
+
 //=======================================================================================================================================================================================================================//
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -121,12 +122,6 @@ std::vector<float> Muon_InnerTrack_phi;
 std::vector<float> Muon_InnerTrack_charge;
 std::vector<float> Muon_InnerTrack_ptErr;
 std::vector<float> Muon_InnerTrack_Chindf;
-// std::vector<float> Muon_Pickypt;
-// std::vector<float> Muon_PickyptErr;
-// std::vector<float> Muon_PickyChindf;
-// std::vector<float> Muon_Dytpt;
-// std::vector<float> Muon_DytptErr;
-// std::vector<float> Muon_DytChindf;
 std::vector<float> Muon_TunePTrack_pt;
 std::vector<float> Muon_TunePTrack_eta;
 std::vector<float> Muon_TunePTrack_phi;
@@ -134,40 +129,25 @@ std::vector<float> Muon_TunePTrack_charge;
 std::vector<float> Muon_TunePTrack_ptErr;
 std::vector<float> Muon_TunePTrack_Chindf;
 
-std::vector<int> nHits_Track;
-std::vector<std::vector<float> > Hit_Track_x;
-std::vector<std::vector<float> > Hit_Track_y;
-std::vector<std::vector<float> > Hit_Track_z;
-std::vector<std::vector<int> > Hit_Track_subdetid;
-std::vector<std::vector<int> > Hit_Track_DT_station;
-std::vector<std::vector<int> > Hit_Track_DT_layer;
-std::vector<std::vector<int> > Hit_Track_DT_superlayer;
-std::vector<std::vector<int> > Hit_Track_DT_wheel;
-std::vector<std::vector<int> > Hit_Track_DT_sector;
-std::vector<std::vector<int> > Hit_Track_CSC_endcap;
-std::vector<std::vector<int> > Hit_Track_CSC_station;
-std::vector<std::vector<int> > Hit_Track_CSC_ringN;
-std::vector<std::vector<int> > Hit_Track_CSC_chamber;
-std::vector<std::vector<int> > Hit_Track_CSC_layer;
-std::vector<std::vector<float> > Hit_prop_x;
-std::vector<std::vector<float> > Hit_prop_y;
-std::vector<std::vector<float> > Hit_prop_z;
+std::vector<std::vector<int> > nHits_GeomDet;
+std::vector<int> nGeomDets;
 
-std::vector<int> nHits_DetAll;
-std::vector<std::vector<float> > Hit_DetAll_x;
-std::vector<std::vector<float> > Hit_DetAll_y;
-std::vector<std::vector<float> > Hit_DetAll_z;
-std::vector<std::vector<int> > Hit_DetAll_subdetid;
-std::vector<std::vector<int> > Hit_DetAll_DT_station;
-std::vector<std::vector<int> > Hit_DetAll_DT_layer;
-std::vector<std::vector<int> > Hit_DetAll_DT_superlayer;
-std::vector<std::vector<int> > Hit_DetAll_DT_wheel;
-std::vector<std::vector<int> > Hit_DetAll_DT_sector;
-std::vector<std::vector<int> > Hit_DetAll_CSC_endcap;
-std::vector<std::vector<int> > Hit_DetAll_CSC_station;
-std::vector<std::vector<int> > Hit_DetAll_CSC_ringN;
-std::vector<std::vector<int> > Hit_DetAll_CSC_chamber;
-std::vector<std::vector<int> > Hit_DetAll_CSC_layer;
+std::vector<std::vector<int> > GeomDet_subdetid;
+std::vector<std::vector<int> > GeomDet_subdet_place_one;
+std::vector<std::vector<int> > GeomDet_subdet_place_two;
+std::vector<std::vector<int> > GeomDet_subdet_place_three;
+std::vector<std::vector<int> > GeomDet_subdet_place_four;
+std::vector<std::vector<int> > GeomDet_subdet_place_five;
+
+std::vector<std::vector<float> > Prop_x;
+std::vector<std::vector<float> > Prop_y;
+std::vector<std::vector<float> > Prop_z;
+
+std::vector<std::vector<std::vector<float> > > Hit_x;
+std::vector<std::vector<std::vector<float> > > Hit_y;
+std::vector<std::vector<std::vector<float> > > Hit_z;
+
+
 
 /////////////////////////////////////// OUTPUT //////////////////////////////////////
 
@@ -267,17 +247,13 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    ///////////////////////////////// GET MUON VARIABLES ////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
    int iMuon = 0;
-   int iHit_Track = 0;
-   int iHit_DetAll = 0;
 
    for (auto itmuon=muons->begin(); itmuon != muons->end(); itmuon++){
 
-     if(!(itmuon->innerTrack().isNonnull())){continue;}
-     if(itmuon->innerTrack()->pt() < 200.){continue;} // High-pT muons
+     if(!(itmuon->innerTrack().isNonnull() && itmuon->globalTrack().isNonnull())){continue;}
+     if(itmuon->globalTrack()->pt() < 200.){continue;} // High-pT muons
 
      iMuon++;
-     if(!(itmuon->globalTrack().isNonnull())){continue;}
-
 
      // Store Muon_* variables
      (itmuon->globalTrack().isNonnull())?Muon_GlbTrack_pt.push_back(itmuon->globalTrack()->pt()):Muon_GlbTrack_pt.push_back(-9999.);
@@ -301,166 +277,233 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      (itmuon->tunePMuonBestTrack().isNonnull())?Muon_TunePTrack_charge.push_back(itmuon->tunePMuonBestTrack()->charge()):Muon_TunePTrack_charge.push_back(-9999.);
      (itmuon->tunePMuonBestTrack().isNonnull())?Muon_TunePTrack_Chindf.push_back(itmuon->tunePMuonBestTrack()->chi2()/(float)itmuon->tunePMuonBestTrack()->ndof()):Muon_TunePTrack_Chindf.push_back(-9999.);
 
+     std::vector<float> temp_prop_x;
+     std::vector<float> temp_prop_y;
+     std::vector<float> temp_prop_z;
+     std::vector<int> temp_subdetid;
+     std::vector<int> temp_subdet_place_one;
+     std::vector<int> temp_subdet_place_two;
+     std::vector<int> temp_subdet_place_three;
+     std::vector<int> temp_subdet_place_four;
+     std::vector<int> temp_subdet_place_five;
+
+     std::vector<std::vector<float> > temp_hit_x_in_allGeomDet;
+     std::vector<std::vector<float> > temp_hit_y_in_allGeomDet;
+     std::vector<std::vector<float> > temp_hit_z_in_allGeomDet;
+
+     std::vector<float> temp_hit_x_in_eachGeomDet;
+     std::vector<float> temp_hit_y_in_eachGeomDet;
+     std::vector<float> temp_hit_z_in_eachGeomDet;
+     std::vector<int> temp_nHits_geomdet;
 
 
-     //-------------------------------------------------------------------------//
-     //------------------------Added by Pablo-----------------------------------//
-     //-------------------------------------------------------------------------//
-
-     //We build the transient track of the tracker track and get its final state on surface
+     // Build the transient track of the tracker track and get its final state on surface
      reco::TransientTrack trackinner(itmuon->innerTrack(), &*theService->magneticField(), theService->trackingGeometry());     
      TrajectoryStateOnSurface outerTSOS = trackinner.outermostMeasurementState(); 
 
-     //We also build the transient track of the global track
-     //reco::TransientTrack track(itmuon->globalTrack(), &*theService->magneticField(), theService->trackingGeometry());     
+     std::map<const GeomDet*, std::vector<TrackingRecHit *> > DetAllSegmentsMap; 
 
-     trackingRecHit_iterator lastHit = trackinner.recHitsEnd() - 1;       
-     DetId outerDetId((*lastHit)->geographicalId());
-       
-     // Get the layer on which the seed relies
-     const DetLayer *initialLayer = theService->detLayerGeometry()->idToLayer(outerDetId);
-       
-     PropagationDirection detLayerOrder = oppositeToMomentum;
-       
-       // ask for compatible layers
-     std::vector<const DetLayer *> detLayers;
-     detLayers = theService->muonNavigationSchool()->compatibleLayers(*initialLayer, *outerTSOS.freeState(), detLayerOrder);
-
-
-     std::vector<const GeomDet*> ExtrapolationDets;
-
-
-     for(auto it = detLayers.begin(); it != detLayers.end(); it++){
-
-       if(!(GEOMDET->geographicalId().det() == DetId::Muon)) continue;
-       if(!(GEOMDET->geographicalId().subdetId() == MuonSubdetId::DT || GEOMDET->geographicalId().subdetId() == MuonSubdetId::CSC)) continue;
-
-       //std::pair<TrajectoryStateOnSurface, double> muonState = theService->propagator(propagator_)->propagateWithPath(outerTSOS, (*it)->surface());
-       std::pair<TrajectoryStateOnSurface, double> muonState = theService->propagator(propagator_)->propagateWithPath(outerTSOS, (*GEOMDET)->surface());
-
-       if(muonState.first.isValid()){
-
-	 std::cout << muonState.first.globalPosition() << std::endl;
-	 ExtrapolationDets.push_back(GEOMDET);
-       }
-     }
-
-
-
-     std::map<const GeomDet*, std::vector<const TrackingRecHit *> > DetAllSegmentsMap; 
      
-     for(auto itGeomDet = ExtrapolationDets.begin(); itGeomDet!= ExtrapolationDets.end(); itGeomDet++){
+     // Loop over dtSegments
 
-       for (auto itHit = dtSegments->begin(); itHit != dtSegments->end(); itHit++) {
-	 //Only valid hits     
-	 if(!itHit->isValid()) continue;
-	 DetId myDet = itHit->geographicalId();
-	 if(myDet != itGeomDet) continue;
-           //Get the GeomDet associated to this DetIt 
-           std::map<const GeomDet*, std::vector<const TrackingRecHit *> >::iterator it = DetAllSegmentsMap.find(itGeomDet);
-           if(it == DetAllSegmentsMap.end()) {
-               //No -> we create a pair of GeomDet and vector of hits, and put the hit in the vector.
-               std::vector<const TrackingRecHit *> trhit;
-               const TrackingRecHit *rechitref = (const TrackingRecHit *)&(*itHit);
-               trhit.push_back(rechitref);
-               DetAllSegmentsMap.insert(std::pair<const GeomDet*, std::vector<const TrackingRecHit *> > (itGeomDet, trhit));
-           } else {
-               //Yes -> we just put the hit in the corresponding hit vector.
-               const TrackingRecHit *rechitref = (const TrackingRecHit *) &(*itHit);
-               it->second.push_back(rechitref);
-           }
-        }
-        for (auto itHit = cscSegments->begin(); itHit != cscSegments->end(); itHit++) {
-           //Only valid hits     
-           if(!itHit->isValid()) continue;
-           DetId myDet = itHit->geographicalId();
-           if(myDet != itGeomDet) continue;
+     for (auto itHit = dtSegments->begin(); itHit != dtSegments->end(); itHit++) {
 
-           //Get the GeomDet associated to this DetIt 
-           std::map<const GeomDet*, std::vector<const TrackingRecHit *> >::iterator it = DetAllSegmentsMap.find(itGeomDet);
-           if(it == DetAllSegmentsMap.end()) {
-               //No -> we create a pair of GeomDet and vector of hits, and put the hit in the vector.
-               std::vector<const TrackingRecHit *> trhit;
-               const TrackingRecHit *rechitref = (const TrackingRecHit *)&(*itHit);
-               trhit.push_back(rechitref);
-               DetAllSegmentsMap.insert(std::pair <const GeomDet*, std::vector<const TrackingRecHit *> > (itGeomDet, trhit));
-	       
-           } else {
-               //Yes -> we just put the hit in the corresponding hit vector.
-               const TrackingRecHit *rechitref = (const TrackingRecHit *) &(*itHit);
-               it->second.push_back(rechitref);
-	       
-           }
-        }
-       
+       //Only valid hits     
+       if(!itHit->isValid()) continue;
+       DetId myDet = itHit->geographicalId();
+       const GeomDet *geomDet = theService->trackingGeometry()->idToDet(myDet);
 
+       //Get the GeomDet associated to this DetId
+       std::map<const GeomDet*, std::vector<TrackingRecHit *> >::iterator it = DetAllSegmentsMap.find(geomDet);
+
+       if(it == DetAllSegmentsMap.end()) {
+	 //No -> we create a pair of GeomDet and vector of hits, and put the hit in the vector.
+	 std::vector<TrackingRecHit *> trhit;
+	 TrackingRecHit *rechitref = (TrackingRecHit *)&(*itHit);
+	 trhit.push_back(rechitref);
+	 DetAllSegmentsMap.insert(std::pair<const GeomDet*, std::vector<TrackingRecHit *> > (geomDet, trhit));
+       } else {
+	 //Yes -> we just put the hit in the corresponding hit vector.
+	 TrackingRecHit *rechitref = (TrackingRecHit *) &(*itHit);
+	 it->second.push_back(rechitref);
+       }
 
      }
+
+
+     // Loop over csc segments
+
+     for (auto itHit = cscSegments->begin(); itHit != cscSegments->end(); itHit++) {
+
+       //Only valid hits     
+       if(!itHit->isValid()) continue;
+       DetId myDet = itHit->geographicalId();
+       const GeomDet *geomDet = theService->trackingGeometry()->idToDet(myDet);
+
+       //Get the GeomDet associated to this DetId
+       std::map<const GeomDet*, std::vector<TrackingRecHit *> >::iterator it = DetAllSegmentsMap.find(geomDet);
+
+       if(it == DetAllSegmentsMap.end()) {
+	 //No -> we create a pair of GeomDet and vector of hits, and put the hit in the vector.
+	 std::vector<TrackingRecHit *> trhit;
+	 TrackingRecHit *rechitref = (TrackingRecHit *)&(*itHit);
+	 trhit.push_back(rechitref);
+	 DetAllSegmentsMap.insert(std::pair<const GeomDet*, std::vector<TrackingRecHit *> > (geomDet, trhit));
+       } else {
+	 //Yes -> we just put the hit in the corresponding hit vector.
+	 TrackingRecHit *rechitref = (TrackingRecHit *) &(*itHit);
+	 it->second.push_back(rechitref);
+       }
+
+     }
+     
+     int nGeomDet = 0;
+ 
+     //Now we do the extrapolations 
+
+     for(auto it = DetAllSegmentsMap.begin(); it != DetAllSegmentsMap.end(); it++) {
+
+         //Propagate
+         std::pair<TrajectoryStateOnSurface, double> muonState = theService->propagator(propagator_)->propagateWithPath(outerTSOS, it->first->surface());
+
+     	 // Store the hit if the extrapolation is valid
+         if(muonState.first.isValid()){
+
+	   nGeomDet++;
+
+     	   temp_prop_x.push_back(muonState.first.localPosition().x());
+     	   temp_prop_y.push_back(muonState.first.localPosition().y());
+     	   temp_prop_z.push_back(muonState.first.localPosition().z());
+	   temp_subdetid.push_back((*it).first->geographicalId().subdetId());
+
+	   if((*it).first->geographicalId().subdetId() == MuonSubdetId::CSC){
+	     CSCDetId id((*it).first->geographicalId().rawId());
+	     temp_subdet_place_one.push_back(id.endcap());
+	     temp_subdet_place_two.push_back(id.station());
+	     temp_subdet_place_three.push_back(id.ring());
+	     temp_subdet_place_four.push_back(id.chamber());
+	     temp_subdet_place_five.push_back(id.layer());
+	     
+	   }else if((*it).first->geographicalId().subdetId() == MuonSubdetId::DT){
+	     DTWireId id((*it).first->geographicalId().rawId());
+	     temp_subdet_place_one.push_back(id.station());
+	     temp_subdet_place_two.push_back(id.layer());
+	     temp_subdet_place_three.push_back(id.superLayer());
+	     temp_subdet_place_four.push_back(id.wheel());
+	     temp_subdet_place_five.push_back(id.sector());
+	   }
+	   
+	   int nHits_geomdet = 0;
+
+	   for(int i=0; i<(int)(*it).second.size(); i++){
+	     nHits_geomdet++;
+	     std::cout<<(*it).second.at(i)->localPosition().x()<<std::endl;
+	     temp_hit_x_in_eachGeomDet.push_back((*it).second.at(i)->localPosition().x()); 
+	     temp_hit_y_in_eachGeomDet.push_back((*it).second.at(i)->localPosition().y()); 
+	     temp_hit_z_in_eachGeomDet.push_back((*it).second.at(i)->localPosition().z()); 
+	   }
+
+	   temp_nHits_geomdet.push_back(nHits_geomdet);
+	   temp_hit_x_in_allGeomDet.push_back(temp_hit_x_in_eachGeomDet);
+	   temp_hit_y_in_allGeomDet.push_back(temp_hit_y_in_eachGeomDet);
+	   temp_hit_z_in_allGeomDet.push_back(temp_hit_z_in_eachGeomDet);
+	   temp_hit_x_in_eachGeomDet.clear();
+	   temp_hit_y_in_eachGeomDet.clear();
+	   temp_hit_z_in_eachGeomDet.clear();
+	   
+	   
+     	 }
+	 
+     	 //Global coords: muonState.first.globalPosition()
+
+         //Here we have everything that we need:
+         //1.- The geomDet in order to the local/global transformations
+         //2.- The extrapolated state at the geomdet
+         //3.- The vector of hits
+     }    
+     
+     // Counters:
+     nGeomDets.push_back(nGeomDet);
+     nHits_GeomDet.push_back(temp_nHits_geomdet);
+     temp_nHits_geomdet.clear();
+
+     // Hit & propagation info
+     Hit_x.push_back(temp_hit_x_in_allGeomDet);
+     Hit_y.push_back(temp_hit_y_in_allGeomDet);
+     Hit_z.push_back(temp_hit_z_in_allGeomDet);
+     temp_hit_x_in_allGeomDet.clear();
+     temp_hit_y_in_allGeomDet.clear();
+     temp_hit_z_in_allGeomDet.clear();
+
+     Prop_x.push_back(temp_prop_x);
+     Prop_y.push_back(temp_prop_y);
+     Prop_z.push_back(temp_prop_z);
+     temp_prop_x.clear();
+     temp_prop_y.clear();
+     temp_prop_z.clear();
+
+     GeomDet_subdetid.push_back(temp_subdetid);
+     GeomDet_subdet_place_one.push_back(temp_subdet_place_one);
+     GeomDet_subdet_place_two.push_back(temp_subdet_place_two);
+     GeomDet_subdet_place_three.push_back(temp_subdet_place_three);
+     GeomDet_subdet_place_four.push_back(temp_subdet_place_four);
+     GeomDet_subdet_place_five.push_back(temp_subdet_place_five);
+     temp_subdetid.clear();
+     temp_subdet_place_one.clear();
+     temp_subdet_place_two.clear();
+     temp_subdet_place_three.clear();
+     temp_subdet_place_four.clear();
+     temp_subdet_place_five.clear();
+
    }
 
      
    /////////////////////////////////////////////////////////////////////////////////////
    /////////////////////////////////// FILL THE TREE ///////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
+
    nMuons = iMuon;
    tree_out->Fill();
-   // Muon_GlbTrack_pt.clear();
-   // Muon_GlbTrack_eta.clear();
-   // Muon_GlbTrack_phi.clear();
-   // Muon_GlbTrack_charge.clear();
-   // Muon_GlbTrack_ptErr.clear();
-   // Muon_GlbTrack_Chindf.clear();
-   // Muon_InnerTrack_pt.clear();
-   // Muon_InnerTrack_eta.clear();
-   // Muon_InnerTrack_phi.clear();
-   // Muon_InnerTrack_charge.clear();
-   // Muon_InnerTrack_ptErr.clear();
-   // Muon_InnerTrack_Chindf.clear();
-   // Muon_TunePTrack_pt.clear();
-   // Muon_TunePTrack_eta.clear();
-   // Muon_TunePTrack_phi.clear();
-   // Muon_TunePTrack_charge.clear();
-   // Muon_TunePTrack_ptErr.clear();
-   // Muon_TunePTrack_Chindf.clear();
-   // nHits_Track.clear();
-   // Hit_Track_x.clear();
-   // Hit_Track_y.clear();
-   // Hit_Track_z.clear();
-   // Hit_prop_x.clear(); 
-   // Hit_prop_y.clear();
-   // Hit_prop_z.clear();
-   // Hit_Track_subdetid.clear();
-   // Hit_Track_DT_station.clear();
-   // Hit_Track_DT_layer.clear();
-   // Hit_Track_DT_superlayer.clear();
-   // Hit_Track_DT_wheel.clear();
-   // Hit_Track_DT_sector.clear();
-   // Hit_Track_CSC_endcap.clear();
-   // Hit_Track_CSC_station.clear();
-   // Hit_Track_CSC_ringN.clear();
-   // Hit_Track_CSC_chamber.clear();
-   // Hit_Track_CSC_layer.clear();
-   // nHits_DetAll.clear();
-   // Hit_DetAll_x.clear();
-   // Hit_DetAll_y.clear();
-   // Hit_DetAll_z.clear();
-   // Hit_DetAll_subdetid.clear();
-   // Hit_DetAll_DT_station.clear();
-   // Hit_DetAll_DT_layer.clear();
-   // Hit_DetAll_DT_superlayer.clear();
-   // Hit_DetAll_DT_wheel.clear();
-   // Hit_DetAll_DT_sector.clear();
-   // Hit_DetAll_CSC_endcap.clear();
-   // Hit_DetAll_CSC_station.clear();
-   // Hit_DetAll_CSC_ringN.clear();
-   // Hit_DetAll_CSC_chamber.clear();
-   // Hit_DetAll_CSC_layer.clear();
-    
+   Muon_GlbTrack_pt.clear();
+   Muon_GlbTrack_eta.clear();
+   Muon_GlbTrack_phi.clear();
+   Muon_GlbTrack_charge.clear();
+   Muon_GlbTrack_ptErr.clear();
+   Muon_GlbTrack_Chindf.clear();
+   Muon_InnerTrack_pt.clear();
+   Muon_InnerTrack_eta.clear();
+   Muon_InnerTrack_phi.clear();
+   Muon_InnerTrack_charge.clear();
+   Muon_InnerTrack_ptErr.clear();
+   Muon_InnerTrack_Chindf.clear();
+   Muon_TunePTrack_pt.clear();
+   Muon_TunePTrack_eta.clear();
+   Muon_TunePTrack_phi.clear();
+   Muon_TunePTrack_charge.clear();
+   Muon_TunePTrack_ptErr.clear();
+   Muon_TunePTrack_Chindf.clear();
+
+   nHits_GeomDet.clear();
+   nGeomDets.clear();
+   Hit_x.clear();
+   Hit_y.clear();
+   Hit_z.clear();
+   Prop_x.clear();
+   Prop_y.clear();
+   Prop_z.clear();
+   GeomDet_subdetid.clear();
+   GeomDet_subdet_place_one.clear();
+   GeomDet_subdet_place_two.clear();
+   GeomDet_subdet_place_three.clear();
+   GeomDet_subdet_place_four.clear();
+   GeomDet_subdet_place_five.clear();
+   
 }
 
 //=======================================================================================================================================================================================================================//
 void RECOAnalysis::beginJob()
 {
+    gInterpreter->GenerateDictionary("vector<vector<vector<float> > >", "vector");
 
     // Output file definition
     output_filename = parameters.getParameter<std::string>("nameOfOutput");
@@ -500,43 +543,24 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Muon_TunePTrack_ptErr", "vector<float>", &Muon_TunePTrack_ptErr);
     tree_out->Branch("Muon_TunePTrack_Chindf", "vector<float>", &Muon_TunePTrack_Chindf);
 
-    // ////////////////////////////// HIT BRANCHES //////////////////////////////
+    // ////////////////////////////// HIT & EXTRAPOLATION BRANCHES //////////////////////////////
 
-   // tree_out->Branch("nHits_Track", "vector<int>", &nHits_Track);
-   // tree_out->Branch("Hit_Track_x", "vector<vector<float> >", &Hit_Track_x);
-   // tree_out->Branch("Hit_Track_y", "vector<vector<float> >", &Hit_Track_y);
-   // tree_out->Branch("Hit_Track_z", "vector<vector<float> >", &Hit_Track_z);
-   // tree_out->Branch("Hit_Track_subdetid", "vector<vector<int> >", &Hit_Track_subdetid);
-   // tree_out->Branch("Hit_Track_DT_station", "vector<vector<int> >", &Hit_Track_DT_station);
-   // tree_out->Branch("Hit_Track_DT_layer", "vector<vector<int> >", &Hit_Track_DT_layer);
-   // tree_out->Branch("Hit_Track_DT_superlayer", "vector<vector<int> >", &Hit_Track_DT_superlayer);
-   // tree_out->Branch("Hit_Track_DT_wheel", "vector<vector<int> >", &Hit_Track_DT_wheel);
-   // tree_out->Branch("Hit_Track_DT_sector", "vector<vector<int> >", &Hit_Track_DT_sector);
-   // tree_out->Branch("Hit_Track_CSC_endcap", "vector<vector<int> >", &Hit_Track_CSC_endcap);
-   // tree_out->Branch("Hit_Track_CSC_station", "vector<vector<int> >", &Hit_Track_CSC_station);
-   // tree_out->Branch("Hit_Track_CSC_ringN", "vector<vector<int> >", &Hit_Track_CSC_ringN);
-   // tree_out->Branch("Hit_Track_CSC_chamber", "vector<vector<int> >", &Hit_Track_CSC_chamber);
-   // tree_out->Branch("Hit_Track_CSC_layer", "vector<vector<int> >", &Hit_Track_CSC_layer);
-
-   // tree_out->Branch("Hit_prop_x", "vector<vector<float> >", &Hit_prop_x);
-   // tree_out->Branch("Hit_prop_y", "vector<vector<float> >", &Hit_prop_y);
-   // tree_out->Branch("Hit_prop_z", "vector<vector<float> >", &Hit_prop_z);
-
-   // tree_out->Branch("nHits_DetAll", "vector<int>", &nHits_DetAll);
-   // tree_out->Branch("Hit_DetAll_x", "vector<vector<float> >", &Hit_DetAll_x);
-   // tree_out->Branch("Hit_DetAll_y", "vector<vector<float> >", &Hit_DetAll_y);
-   // tree_out->Branch("Hit_DetAll_z", "vector<vector<float> >", &Hit_DetAll_z);
-   // tree_out->Branch("Hit_DetAll_subdetid", "vector<vector<int> >", &Hit_DetAll_subdetid);
-   // tree_out->Branch("Hit_DetAll_DT_station", "vector<vector<int> >", &Hit_DetAll_DT_station);
-   // tree_out->Branch("Hit_DetAll_DT_layer", "vector<vector<int> >", &Hit_DetAll_DT_layer);
-   // tree_out->Branch("Hit_DetAll_DT_superlayer", "vector<vector<int> >", &Hit_DetAll_DT_superlayer);
-   // tree_out->Branch("Hit_DetAll_DT_wheel", "vector<vector<int> >", &Hit_DetAll_DT_wheel);
-   // tree_out->Branch("Hit_DetAll_DT_sector", "vector<vector<int> >", &Hit_DetAll_DT_sector);
-   // tree_out->Branch("Hit_DetAll_CSC_endcap", "vector<vector<int> >", &Hit_DetAll_CSC_endcap);
-   // tree_out->Branch("Hit_DetAll_CSC_station", "vector<vector<int> >", &Hit_DetAll_CSC_station);
-   // tree_out->Branch("Hit_DetAll_CSC_ringN", "vector<vector<int> >", &Hit_DetAll_CSC_ringN);
-   // tree_out->Branch("Hit_DetAll_CSC_chamber", "vector<vector<int> >", &Hit_DetAll_CSC_chamber);
-   // tree_out->Branch("Hit_DetAll_CSC_layer", "vector<vector<int> >", &Hit_DetAll_CSC_layer);
+    tree_out->Branch("nGeomDets", "vector<int>", &nGeomDets);
+    tree_out->Branch("nHits_GeomDet", "vector<vector<int> >", &nHits_GeomDet);
+    tree_out->Branch("GeomDet_subdetid", "vector<vector<int> >", &GeomDet_subdetid);
+    tree_out->Branch("GeomDet_subdet_place_one", "vector<vector<int> >", &GeomDet_subdet_place_one);
+    tree_out->Branch("GeomDet_subdet_place_two", "vector<vector<int> >", &GeomDet_subdet_place_two);
+    tree_out->Branch("GeomDet_subdet_place_three", "vector<vector<int> >", &GeomDet_subdet_place_three);
+    tree_out->Branch("GeomDet_subdet_place_four", "vector<vector<int> >", &GeomDet_subdet_place_four);
+    tree_out->Branch("GeomDet_subdet_place_five", "vector<vector<int> >", &GeomDet_subdet_place_five);
+    
+    tree_out->Branch("Prop_x", "vector<vector<float> >", &Prop_x);
+    tree_out->Branch("Prop_y", "vector<vector<float> >", &Prop_y);
+    tree_out->Branch("Prop_z", "vector<vector<float> >", &Prop_z);
+    
+    tree_out->Branch("Hit_x", "vector<vector<vector<float> > >", &Hit_x);
+    tree_out->Branch("Hit_y", "vector<vector<vector<float> > >", &Hit_y);
+    tree_out->Branch("Hit_z", "vector<vector<vector<float> > >", &Hit_z);
  
 }
 
