@@ -129,24 +129,19 @@ std::vector<float> Muon_TunePTrack_charge;
 std::vector<float> Muon_TunePTrack_ptErr;
 std::vector<float> Muon_TunePTrack_Chindf;
 
-std::vector<std::vector<int> > nHits_GeomDet;
 std::vector<int> nGeomDets;
-
-std::vector<std::vector<int> > GeomDet_subdetid;
-std::vector<std::vector<int> > GeomDet_subdet_place_one;
-std::vector<std::vector<int> > GeomDet_subdet_place_two;
-std::vector<std::vector<int> > GeomDet_subdet_place_three;
-std::vector<std::vector<int> > GeomDet_subdet_place_four;
-std::vector<std::vector<int> > GeomDet_subdet_place_five;
+std::vector<int> nHits;
 
 std::vector<std::vector<float> > Prop_x;
 std::vector<std::vector<float> > Prop_y;
 std::vector<std::vector<float> > Prop_z;
+//std::vector<std::vector<unsigned int> > Prop_detid;
 
-std::vector<std::vector<std::vector<float> > > Hit_x;
-std::vector<std::vector<std::vector<float> > > Hit_y;
-std::vector<std::vector<std::vector<float> > > Hit_z;
-
+std::vector<std::vector<float> > Hit_x;
+std::vector<std::vector<float> > Hit_y;
+std::vector<std::vector<float> > Hit_z;
+//std::vector<std::vector<unsigned int> > Hit_detid;
+std::vector<std::vector<int> > Hit_hitid;
 
 
 /////////////////////////////////////// OUTPUT //////////////////////////////////////
@@ -280,21 +275,13 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      std::vector<float> temp_prop_x;
      std::vector<float> temp_prop_y;
      std::vector<float> temp_prop_z;
-     std::vector<int> temp_subdetid;
-     std::vector<int> temp_subdet_place_one;
-     std::vector<int> temp_subdet_place_two;
-     std::vector<int> temp_subdet_place_three;
-     std::vector<int> temp_subdet_place_four;
-     std::vector<int> temp_subdet_place_five;
+     std::vector<unsigned int> temp_prop_detid;
 
-     std::vector<std::vector<float> > temp_hit_x_in_allGeomDet;
-     std::vector<std::vector<float> > temp_hit_y_in_allGeomDet;
-     std::vector<std::vector<float> > temp_hit_z_in_allGeomDet;
-
-     std::vector<float> temp_hit_x_in_eachGeomDet;
-     std::vector<float> temp_hit_y_in_eachGeomDet;
-     std::vector<float> temp_hit_z_in_eachGeomDet;
-     std::vector<int> temp_nHits_geomdet;
+     std::vector<float> temp_hit_x;
+     std::vector<float> temp_hit_y;
+     std::vector<float> temp_hit_z;
+     std::vector<unsigned int> temp_hit_detid;
+     std::vector<int> temp_hit_hitid;
 
 
      // Build the transient track of the tracker track and get its final state on surface
@@ -357,7 +344,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
      }
      
-     int nGeomDet = 0;
+     int iGeomDet = 0;
+     int iHit = 0;
  
      //Now we do the extrapolations 
 
@@ -369,47 +357,22 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      	 // Store the hit if the extrapolation is valid
          if(muonState.first.isValid()){
 
-	   nGeomDet++;
+	   iGeomDet++;
 
      	   temp_prop_x.push_back(muonState.first.localPosition().x());
      	   temp_prop_y.push_back(muonState.first.localPosition().y());
      	   temp_prop_z.push_back(muonState.first.localPosition().z());
-	   temp_subdetid.push_back((*it).first->geographicalId().subdetId());
-
-	   if((*it).first->geographicalId().subdetId() == MuonSubdetId::CSC){
-	     CSCDetId id((*it).first->geographicalId().rawId());
-	     temp_subdet_place_one.push_back(id.endcap());
-	     temp_subdet_place_two.push_back(id.station());
-	     temp_subdet_place_three.push_back(id.ring());
-	     temp_subdet_place_four.push_back(id.chamber());
-	     temp_subdet_place_five.push_back(id.layer());
-	     
-	   }else if((*it).first->geographicalId().subdetId() == MuonSubdetId::DT){
-	     DTWireId id((*it).first->geographicalId().rawId());
-	     temp_subdet_place_one.push_back(id.station());
-	     temp_subdet_place_two.push_back(id.layer());
-	     temp_subdet_place_three.push_back(id.superLayer());
-	     temp_subdet_place_four.push_back(id.wheel());
-	     temp_subdet_place_five.push_back(id.sector());
-	   }
+	   //	   temp_prop_detid.push_back((*it).first->geographicalId().rawId());
 	   
-	   int nHits_geomdet = 0;
-
 	   for(int i=0; i<(int)(*it).second.size(); i++){
-	     nHits_geomdet++;
+	     iHit++;
 	     std::cout<<(*it).second.at(i)->localPosition().x()<<std::endl;
-	     temp_hit_x_in_eachGeomDet.push_back((*it).second.at(i)->localPosition().x()); 
-	     temp_hit_y_in_eachGeomDet.push_back((*it).second.at(i)->localPosition().y()); 
-	     temp_hit_z_in_eachGeomDet.push_back((*it).second.at(i)->localPosition().z()); 
+	     temp_hit_x.push_back((*it).second.at(i)->localPosition().x()); 
+	     temp_hit_y.push_back((*it).second.at(i)->localPosition().y()); 
+	     temp_hit_z.push_back((*it).second.at(i)->localPosition().z()); 
+	     // temp_hit_detid.push_back((*it).first->geographicalId().rawId()); 
+	     temp_hit_hitid.push_back(iHit);
 	   }
-
-	   temp_nHits_geomdet.push_back(nHits_geomdet);
-	   temp_hit_x_in_allGeomDet.push_back(temp_hit_x_in_eachGeomDet);
-	   temp_hit_y_in_allGeomDet.push_back(temp_hit_y_in_eachGeomDet);
-	   temp_hit_z_in_allGeomDet.push_back(temp_hit_z_in_eachGeomDet);
-	   temp_hit_x_in_eachGeomDet.clear();
-	   temp_hit_y_in_eachGeomDet.clear();
-	   temp_hit_z_in_eachGeomDet.clear();
 	   
 	   
      	 }
@@ -423,37 +386,31 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      }    
      
      // Counters:
-     nGeomDets.push_back(nGeomDet);
-     nHits_GeomDet.push_back(temp_nHits_geomdet);
-     temp_nHits_geomdet.clear();
+     nGeomDets.push_back(iGeomDet);
+     nHits.push_back(iHit);
 
      // Hit & propagation info
-     Hit_x.push_back(temp_hit_x_in_allGeomDet);
-     Hit_y.push_back(temp_hit_y_in_allGeomDet);
-     Hit_z.push_back(temp_hit_z_in_allGeomDet);
-     temp_hit_x_in_allGeomDet.clear();
-     temp_hit_y_in_allGeomDet.clear();
-     temp_hit_z_in_allGeomDet.clear();
 
      Prop_x.push_back(temp_prop_x);
      Prop_y.push_back(temp_prop_y);
      Prop_z.push_back(temp_prop_z);
+     //Prop_detid.push_back(temp_prop_detid);
+
+     Hit_x.push_back(temp_hit_x);
+     Hit_y.push_back(temp_hit_y);
+     Hit_z.push_back(temp_hit_z);
+     //Hit_detid.push_back(temp_hit_detid);
+     Hit_hitid.push_back(temp_hit_hitid);
+
      temp_prop_x.clear();
      temp_prop_y.clear();
      temp_prop_z.clear();
-
-     GeomDet_subdetid.push_back(temp_subdetid);
-     GeomDet_subdet_place_one.push_back(temp_subdet_place_one);
-     GeomDet_subdet_place_two.push_back(temp_subdet_place_two);
-     GeomDet_subdet_place_three.push_back(temp_subdet_place_three);
-     GeomDet_subdet_place_four.push_back(temp_subdet_place_four);
-     GeomDet_subdet_place_five.push_back(temp_subdet_place_five);
-     temp_subdetid.clear();
-     temp_subdet_place_one.clear();
-     temp_subdet_place_two.clear();
-     temp_subdet_place_three.clear();
-     temp_subdet_place_four.clear();
-     temp_subdet_place_five.clear();
+     //temp_prop_detid.clear();
+     temp_hit_x.clear();
+     temp_hit_y.clear();
+     temp_hit_z.clear();
+     //temp_hit_detid.clear();
+     temp_hit_hitid.clear();
 
    }
 
@@ -482,28 +439,23 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Muon_TunePTrack_charge.clear();
    Muon_TunePTrack_ptErr.clear();
    Muon_TunePTrack_Chindf.clear();
-
-   nHits_GeomDet.clear();
    nGeomDets.clear();
-   Hit_x.clear();
-   Hit_y.clear();
-   Hit_z.clear();
+   nHits.clear();
    Prop_x.clear();
    Prop_y.clear();
    Prop_z.clear();
-   GeomDet_subdetid.clear();
-   GeomDet_subdet_place_one.clear();
-   GeomDet_subdet_place_two.clear();
-   GeomDet_subdet_place_three.clear();
-   GeomDet_subdet_place_four.clear();
-   GeomDet_subdet_place_five.clear();
+   //Prop_detid.clear();
+   Hit_x.clear();
+   Hit_y.clear();
+   Hit_z.clear();
+   //Hit_detid.clear();
+   Hit_hitid.clear();
    
 }
 
 //=======================================================================================================================================================================================================================//
 void RECOAnalysis::beginJob()
 {
-    gInterpreter->GenerateDictionary("vector<vector<vector<float> > >", "vector");
 
     // Output file definition
     output_filename = parameters.getParameter<std::string>("nameOfOutput");
@@ -546,21 +498,19 @@ void RECOAnalysis::beginJob()
     // ////////////////////////////// HIT & EXTRAPOLATION BRANCHES //////////////////////////////
 
     tree_out->Branch("nGeomDets", "vector<int>", &nGeomDets);
-    tree_out->Branch("nHits_GeomDet", "vector<vector<int> >", &nHits_GeomDet);
-    tree_out->Branch("GeomDet_subdetid", "vector<vector<int> >", &GeomDet_subdetid);
-    tree_out->Branch("GeomDet_subdet_place_one", "vector<vector<int> >", &GeomDet_subdet_place_one);
-    tree_out->Branch("GeomDet_subdet_place_two", "vector<vector<int> >", &GeomDet_subdet_place_two);
-    tree_out->Branch("GeomDet_subdet_place_three", "vector<vector<int> >", &GeomDet_subdet_place_three);
-    tree_out->Branch("GeomDet_subdet_place_four", "vector<vector<int> >", &GeomDet_subdet_place_four);
-    tree_out->Branch("GeomDet_subdet_place_five", "vector<vector<int> >", &GeomDet_subdet_place_five);
+    tree_out->Branch("nHits", "vector<int>", &nHits);
     
     tree_out->Branch("Prop_x", "vector<vector<float> >", &Prop_x);
     tree_out->Branch("Prop_y", "vector<vector<float> >", &Prop_y);
     tree_out->Branch("Prop_z", "vector<vector<float> >", &Prop_z);
+    // tree_out->Branch("Prop_detid", "vector<vector<unsigned int> >", &Prop_detid);
     
-    tree_out->Branch("Hit_x", "vector<vector<vector<float> > >", &Hit_x);
-    tree_out->Branch("Hit_y", "vector<vector<vector<float> > >", &Hit_y);
-    tree_out->Branch("Hit_z", "vector<vector<vector<float> > >", &Hit_z);
+    tree_out->Branch("Hit_x", "vector<vector<float> >", &Hit_x);
+    tree_out->Branch("Hit_y", "vector<vector<float> >", &Hit_y);
+    tree_out->Branch("Hit_z", "vector<vector<float> >", &Hit_z);
+    //tree_out->Branch("Hit_detid", "vector<vector<unsigned int> >", &Hit_detid);
+    tree_out->Branch("Hit_hitid", "vector<vector<int> >", &Hit_hitid);
+
  
 }
 
