@@ -250,7 +250,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
    for (auto itmuon=muons->begin(); itmuon != muons->end(); itmuon++){
 
-     if(!(itmuon->innerTrack().isNonnull() && itmuon->globalTrack().isNonnull())){continue;}
+     if(!(itmuon->innerTrack().isNonnull())){continue;}
      if(itmuon->globalTrack()->pt() < 200.){continue;} // High-pT muons
 
      iMuon++;
