@@ -110,6 +110,7 @@ Int_t Event_run;
 //-> MUON INFO
 Int_t   nMuons;
 
+std::vector<float> Muon_Genpt;
 std::vector<float> Muon_GlbTrack_pt;
 std::vector<float> Muon_GlbTrack_eta;
 std::vector<float> Muon_GlbTrack_phi;
@@ -129,19 +130,19 @@ std::vector<float> Muon_TunePTrack_charge;
 std::vector<float> Muon_TunePTrack_ptErr;
 std::vector<float> Muon_TunePTrack_Chindf;
 
-std::vector<int> nGeomDets;
-std::vector<int> nHits;
+std::vector<int> Muon_nGeomDets;
+std::vector<int> Muon_nHits;
 
-std::vector<std::vector<float> > Prop_x;
-std::vector<std::vector<float> > Prop_y;
-std::vector<std::vector<float> > Prop_z;
-//std::vector<std::vector<unsigned int> > Prop_detid;
+std::vector<float> Prop_x;
+std::vector<float> Prop_y;
+std::vector<float> Prop_z;
+std::vector<unsigned int> Prop_detid;
 
-std::vector<std::vector<float> > Hit_x;
-std::vector<std::vector<float> > Hit_y;
-std::vector<std::vector<float> > Hit_z;
-//std::vector<std::vector<unsigned int> > Hit_detid;
-std::vector<std::vector<int> > Hit_hitid;
+std::vector<float> Hit_x;
+std::vector<float> Hit_y;
+std::vector<float> Hit_z;
+std::vector<unsigned int> Hit_detid;
+std::vector<int> Hit_hitid;
 
 
 /////////////////////////////////////// OUTPUT //////////////////////////////////////
@@ -246,9 +247,12 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    for (auto itmuon=muons->begin(); itmuon != muons->end(); itmuon++){
 
      if(!(itmuon->innerTrack().isNonnull())){continue;}
-     if(itmuon->globalTrack()->pt() < 200.){continue;} // High-pT muons
+     if(itmuon->innerTrack()->pt() < 200.){continue;} // High-pT muons
 
-     iMuon++;
+     // TO DO: MC Truth Matching + gen pT
+     
+     iMuon++;     
+
 
      // Store Muon_* variables
      (itmuon->globalTrack().isNonnull())?Muon_GlbTrack_pt.push_back(itmuon->globalTrack()->pt()):Muon_GlbTrack_pt.push_back(-9999.);
@@ -271,17 +275,6 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      (itmuon->tunePMuonBestTrack().isNonnull())?Muon_TunePTrack_phi.push_back(itmuon->tunePMuonBestTrack()->phi()):Muon_TunePTrack_phi.push_back(-9999.);
      (itmuon->tunePMuonBestTrack().isNonnull())?Muon_TunePTrack_charge.push_back(itmuon->tunePMuonBestTrack()->charge()):Muon_TunePTrack_charge.push_back(-9999.);
      (itmuon->tunePMuonBestTrack().isNonnull())?Muon_TunePTrack_Chindf.push_back(itmuon->tunePMuonBestTrack()->chi2()/(float)itmuon->tunePMuonBestTrack()->ndof()):Muon_TunePTrack_Chindf.push_back(-9999.);
-
-     std::vector<float> temp_prop_x;
-     std::vector<float> temp_prop_y;
-     std::vector<float> temp_prop_z;
-     std::vector<unsigned int> temp_prop_detid;
-
-     std::vector<float> temp_hit_x;
-     std::vector<float> temp_hit_y;
-     std::vector<float> temp_hit_z;
-     std::vector<unsigned int> temp_hit_detid;
-     std::vector<int> temp_hit_hitid;
 
 
      // Build the transient track of the tracker track and get its final state on surface
@@ -344,9 +337,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
      }
      
-     int iGeomDet = 0;
      int iHit = 0;
- 
+     int iGeomDet = 0;
      //Now we do the extrapolations 
 
      for(auto it = DetAllSegmentsMap.begin(); it != DetAllSegmentsMap.end(); it++) {
@@ -356,24 +348,22 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
      	 // Store the hit if the extrapolation is valid
          if(muonState.first.isValid()){
-
+	   
 	   iGeomDet++;
-
-     	   temp_prop_x.push_back(muonState.first.localPosition().x());
-     	   temp_prop_y.push_back(muonState.first.localPosition().y());
-     	   temp_prop_z.push_back(muonState.first.localPosition().z());
-	   //	   temp_prop_detid.push_back((*it).first->geographicalId().rawId());
+     	   Prop_x.push_back(muonState.first.localPosition().x());
+     	   Prop_y.push_back(muonState.first.localPosition().y());
+     	   Prop_z.push_back(muonState.first.localPosition().z());
+	   Prop_detid.push_back((*it).first->geographicalId().rawId());
 	   
 	   for(int i=0; i<(int)(*it).second.size(); i++){
 	     iHit++;
-	     std::cout<<(*it).second.at(i)->localPosition().x()<<std::endl;
-	     temp_hit_x.push_back((*it).second.at(i)->localPosition().x()); 
-	     temp_hit_y.push_back((*it).second.at(i)->localPosition().y()); 
-	     temp_hit_z.push_back((*it).second.at(i)->localPosition().z()); 
-	     // temp_hit_detid.push_back((*it).first->geographicalId().rawId()); 
-	     temp_hit_hitid.push_back(iHit);
+
+	     Hit_x.push_back((*it).second.at(i)->localPosition().x()); 
+	     Hit_y.push_back((*it).second.at(i)->localPosition().y()); 
+	     Hit_z.push_back((*it).second.at(i)->localPosition().z()); 
+	     Hit_detid.push_back((*it).first->geographicalId().rawId()); 
+	     Hit_hitid.push_back(iHit);
 	   }
-	   
 	   
      	 }
 	 
@@ -385,32 +375,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
          //3.- The vector of hits
      }    
      
-     // Counters:
-     nGeomDets.push_back(iGeomDet);
-     nHits.push_back(iHit);
-
-     // Hit & propagation info
-
-     Prop_x.push_back(temp_prop_x);
-     Prop_y.push_back(temp_prop_y);
-     Prop_z.push_back(temp_prop_z);
-     //Prop_detid.push_back(temp_prop_detid);
-
-     Hit_x.push_back(temp_hit_x);
-     Hit_y.push_back(temp_hit_y);
-     Hit_z.push_back(temp_hit_z);
-     //Hit_detid.push_back(temp_hit_detid);
-     Hit_hitid.push_back(temp_hit_hitid);
-
-     temp_prop_x.clear();
-     temp_prop_y.clear();
-     temp_prop_z.clear();
-     //temp_prop_detid.clear();
-     temp_hit_x.clear();
-     temp_hit_y.clear();
-     temp_hit_z.clear();
-     //temp_hit_detid.clear();
-     temp_hit_hitid.clear();
+     Muon_nGeomDets.push_back(iGeomDet);
+     Muon_nHits.push_back(iHit);
 
    }
 
@@ -421,6 +387,9 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
    nMuons = iMuon;
    tree_out->Fill();
+
+   Muon_nGeomDets.clear();
+   Muon_nHits.clear();
    Muon_GlbTrack_pt.clear();
    Muon_GlbTrack_eta.clear();
    Muon_GlbTrack_phi.clear();
@@ -439,16 +408,14 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Muon_TunePTrack_charge.clear();
    Muon_TunePTrack_ptErr.clear();
    Muon_TunePTrack_Chindf.clear();
-   nGeomDets.clear();
-   nHits.clear();
    Prop_x.clear();
    Prop_y.clear();
    Prop_z.clear();
-   //Prop_detid.clear();
+   Prop_detid.clear();
    Hit_x.clear();
    Hit_y.clear();
    Hit_z.clear();
-   //Hit_detid.clear();
+   Hit_detid.clear();
    Hit_hitid.clear();
    
 }
@@ -476,6 +443,7 @@ void RECOAnalysis::beginJob()
     // ////////////////////////////// MUON BRANCHES //////////////////////////////
 
     tree_out->Branch("nMuons", &nMuons, "nMuons/I");
+    tree_out->Branch("Muon_Genpt", "vector<float>", &Muon_Genpt);
     tree_out->Branch("Muon_GlbTrack_pt", "vector<float>", &Muon_GlbTrack_pt);
     tree_out->Branch("Muon_GlbTrack_eta", "vector<float>", &Muon_GlbTrack_eta);
     tree_out->Branch("Muon_GlbTrack_phi", "vector<float>", &Muon_GlbTrack_phi);
@@ -494,22 +462,22 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Muon_TunePTrack_charge", "vector<float>", &Muon_TunePTrack_charge);
     tree_out->Branch("Muon_TunePTrack_ptErr", "vector<float>", &Muon_TunePTrack_ptErr);
     tree_out->Branch("Muon_TunePTrack_Chindf", "vector<float>", &Muon_TunePTrack_Chindf);
+    tree_out->Branch("Muon_nGeomDets", "vector<int>", &Muon_nGeomDets);
+    tree_out->Branch("Muon_nHits", "vector<int>", &Muon_nHits);
 
     // ////////////////////////////// HIT & EXTRAPOLATION BRANCHES //////////////////////////////
 
-    tree_out->Branch("nGeomDets", "vector<int>", &nGeomDets);
-    tree_out->Branch("nHits", "vector<int>", &nHits);
+
+    tree_out->Branch("Prop_x", "vector<float>", &Prop_x);
+    tree_out->Branch("Prop_y", "vector<float>", &Prop_y);
+    tree_out->Branch("Prop_z", "vector<float>", &Prop_z);
+    tree_out->Branch("Prop_detid", "vector<unsigned int>", &Prop_detid);
     
-    tree_out->Branch("Prop_x", "vector<vector<float> >", &Prop_x);
-    tree_out->Branch("Prop_y", "vector<vector<float> >", &Prop_y);
-    tree_out->Branch("Prop_z", "vector<vector<float> >", &Prop_z);
-    // tree_out->Branch("Prop_detid", "vector<vector<unsigned int> >", &Prop_detid);
-    
-    tree_out->Branch("Hit_x", "vector<vector<float> >", &Hit_x);
-    tree_out->Branch("Hit_y", "vector<vector<float> >", &Hit_y);
-    tree_out->Branch("Hit_z", "vector<vector<float> >", &Hit_z);
-    //tree_out->Branch("Hit_detid", "vector<vector<unsigned int> >", &Hit_detid);
-    tree_out->Branch("Hit_hitid", "vector<vector<int> >", &Hit_hitid);
+    tree_out->Branch("Hit_x", "vector<float>", &Hit_x);
+    tree_out->Branch("Hit_y", "vector<float>", &Hit_y);
+    tree_out->Branch("Hit_z", "vector<float>", &Hit_z);
+    tree_out->Branch("Hit_detid", "vector<unsigned int>", &Hit_detid);
+    tree_out->Branch("Hit_hitid", "vector<int>", &Hit_hitid);
 
  
 }
