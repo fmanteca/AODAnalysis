@@ -257,7 +257,6 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      if(!(itmuon->innerTrack().isNonnull())) continue;
      if(itmuon->innerTrack()->pt() < 200.) continue; // High-pT muons
 
-     //     std::cout << itmuon->
      // MC Truth Matching + gen pT storage
      bool GenMatch = false;
      for (auto itgenparticle=genparticles->begin(); itgenparticle != genparticles->end(); itgenparticle++){
