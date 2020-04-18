@@ -145,22 +145,27 @@ if __name__ == '__main__':
                     h5.SetLineColor(3)
                     h5.SetLineWidth(3)
                     leg.AddEntry(h5, 'TuneP_pt', 'f')
+                    leg.Draw()
 
+            else:
+                c1.cd()
+                h.Draw()
+                leg.Draw()
+
+                c1.SaveAs(str(args.outputDir) + prefix + str(var) + '.png')
+                c1.SaveAs(str(args.outputDir )+ prefix + str(var) + '.pdf')
+                
+                c1.Clear()
 
 
         ## Draw the legend:
         
-        c1.cd()
-        leg.Draw()
+
 
 
 
         ## Save the plots
 
-        c1.SaveAs(str(args.outputDir) + prefix + str(var) + '.png')
-        c1.SaveAs(str(args.outputDir )+ prefix + str(var) + '.pdf')
-
-        c1.Clear()
 
 
         if var.startswith('Muon1'):
