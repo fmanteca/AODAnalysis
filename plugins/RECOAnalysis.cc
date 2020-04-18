@@ -104,13 +104,12 @@
 ////////////////////////////////////// BRANCHES /////////////////////////////////////
 
 //-> EVENT INFO
-Int_t Event_event;
+Int_t Event_id;
 Int_t Event_luminosityBlock;
 Int_t Event_run;
-
+Int_t Event_nMuons;
 
 //-> MUON INFO
-Int_t   nMuons;
 
 std::vector<float> Muon_Genpt;
 std::vector<float> Muon_GlbTrack_pt;
@@ -131,21 +130,26 @@ std::vector<float> Muon_TunePTrack_phi;
 std::vector<float> Muon_TunePTrack_charge;
 std::vector<float> Muon_TunePTrack_ptErr;
 std::vector<float> Muon_TunePTrack_Chindf;
-
+std::vector<int> Muon_Muonid;
+std::vector<int> Muon_Eventid;
 std::vector<int> Muon_nGeomDets;
 std::vector<int> Muon_nHits;
 
 std::vector<float> Prop_x;
 std::vector<float> Prop_y;
 std::vector<float> Prop_z;
-std::vector<unsigned int> Prop_detid;
+std::vector<unsigned int> Prop_Detid;
+std::vector<int> Prop_Muonid;
+std::vector<int> Prop_Eventid;
 
 std::vector<float> Hit_x;
 std::vector<float> Hit_y;
 std::vector<float> Hit_z;
 std::vector<float> Hit_distToProp;
-std::vector<unsigned int> Hit_detid;
-std::vector<int> Hit_hitid;
+std::vector<unsigned int> Hit_Detid;
+std::vector<int> Hit_Hitid;
+std::vector<int> Hit_Muonid;
+std::vector<int> Hit_Eventid;
 
 
 /////////////////////////////////////// OUTPUT //////////////////////////////////////
@@ -243,7 +247,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
    /////////////////////////////////// EVENT INFO //////////////////////////////////////
 
-   Event_event = iEvent.id().event();
+   Event_id = iEvent.id().event();
    Event_run = iEvent.id().run();
    Event_luminosityBlock = iEvent.id().luminosityBlock();
 
@@ -378,7 +382,10 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      	   Prop_x.push_back(propx);
      	   Prop_y.push_back(propy);
      	   Prop_z.push_back(propz);
-	   Prop_detid.push_back((*it).first->geographicalId().rawId());
+	   Prop_Detid.push_back((*it).first->geographicalId().rawId());
+	   Prop_Muonid.push_back(iMuon);
+	   Prop_Eventid.push_back(iEvent.id().event());
+
 	   
 	   for(int i=0; i<(int)(*it).second.size(); i++){
 
@@ -389,9 +396,11 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	     Hit_x.push_back(hitx); 
 	     Hit_y.push_back(hity); 
 	     Hit_z.push_back(hitz); 
-	     Hit_detid.push_back((*it).first->geographicalId().rawId()); 
-	     Hit_hitid.push_back(iHit);
+	     Hit_Detid.push_back((*it).first->geographicalId().rawId()); 
+	     Hit_Hitid.push_back(iHit);
 	     Hit_distToProp.push_back(std::sqrt(std::pow((hitx-propx),2) + std::pow((hity-propy),2) + std::pow((propz-hitz),2)));
+	     Hit_Muonid.push_back(iMuon);
+	     Hit_Eventid.push_back(iEvent.id().event());
 	   }
 	   
      	 }
@@ -406,17 +415,21 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      
      Muon_nGeomDets.push_back(iGeomDet);
      Muon_nHits.push_back(iHit);
+     Muon_Muonid.push_back(iMuon);
+     Muon_Eventid.push_back(iEvent.id().event());
 
    }
 
+   Event_nMuons = iMuon;
      
    /////////////////////////////////////////////////////////////////////////////////////
    /////////////////////////////////// FILL THE TREE ///////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
 
-   nMuons = iMuon;
    tree_out->Fill();
 
+   Muon_Muonid.clear();
+   Muon_Eventid.clear();
    Muon_nGeomDets.clear();
    Muon_nHits.clear();
    Muon_Genpt.clear();
@@ -441,13 +454,18 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Prop_x.clear();
    Prop_y.clear();
    Prop_z.clear();
-   Prop_detid.clear();
+   Prop_Detid.clear();
+   Prop_Muonid.clear();
+   Prop_Eventid.clear();
    Hit_x.clear();
    Hit_y.clear();
    Hit_z.clear();
    Hit_distToProp.clear();
-   Hit_detid.clear();
-   Hit_hitid.clear();
+   Hit_Detid.clear();
+   Hit_Hitid.clear();
+   Hit_Muonid.clear();
+   Hit_Eventid.clear();
+
    
 }
 
@@ -467,13 +485,15 @@ void RECOAnalysis::beginJob()
 
     // ///////////////////////////////// EVENT INFO BRANCHES ///////////////////////////////
 
-    tree_out->Branch("Event_event", &Event_event, "Event_event/I");
+    tree_out->Branch("Event_id", &Event_id, "Event_id/I");
     tree_out->Branch("Event_run", &Event_run, "Event_run/I");
     tree_out->Branch("Event_luminosityBlock", &Event_luminosityBlock, "Event_luminosityBlock/I");
+    tree_out->Branch("Event_nMuons", &Event_nMuons, "Event_nMuons/I");
 
     // ////////////////////////////// MUON BRANCHES //////////////////////////////
 
-    tree_out->Branch("nMuons", &nMuons, "nMuons/I");
+    tree_out->Branch("Muon_Eventid", "vector<int>", &Muon_Eventid);
+    tree_out->Branch("Muon_Muonid",  "vector<int>", &Muon_Muonid);
     tree_out->Branch("Muon_Genpt", "vector<float>", &Muon_Genpt);
     tree_out->Branch("Muon_GlbTrack_pt", "vector<float>", &Muon_GlbTrack_pt);
     tree_out->Branch("Muon_GlbTrack_eta", "vector<float>", &Muon_GlbTrack_eta);
@@ -502,14 +522,18 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Prop_x", "vector<float>", &Prop_x);
     tree_out->Branch("Prop_y", "vector<float>", &Prop_y);
     tree_out->Branch("Prop_z", "vector<float>", &Prop_z);
-    tree_out->Branch("Prop_detid", "vector<unsigned int>", &Prop_detid);
+    tree_out->Branch("Prop_Detid", "vector<unsigned int>", &Prop_Detid);
+    tree_out->Branch("Prop_Muonid", "vector<int>", &Prop_Muonid);
+    tree_out->Branch("Prop_Eventid", "vector<int>", &Prop_Eventid);
     
     tree_out->Branch("Hit_x", "vector<float>", &Hit_x);
     tree_out->Branch("Hit_y", "vector<float>", &Hit_y);
     tree_out->Branch("Hit_z", "vector<float>", &Hit_z);
     tree_out->Branch("Hit_distToProp", "vector<float>", &Hit_distToProp);
-    tree_out->Branch("Hit_detid", "vector<unsigned int>", &Hit_detid);
-    tree_out->Branch("Hit_hitid", "vector<int>", &Hit_hitid);
+    tree_out->Branch("Hit_Detid", "vector<unsigned int>", &Hit_Detid);
+    tree_out->Branch("Hit_Hitid", "vector<int>", &Hit_Hitid);
+    tree_out->Branch("Hit_Muonid", "vector<int>", &Hit_Muonid);
+    tree_out->Branch("Hit_Eventid", "vector<int>", &Hit_Eventid);
 
  
 }
