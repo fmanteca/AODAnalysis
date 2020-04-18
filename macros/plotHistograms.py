@@ -144,7 +144,7 @@ if __name__ == '__main__':
                     h5.Add(h4)
                     h5.SetLineColor(3)
                     h5.SetLineWidth(3)
-                    leg.AddEntry(h5, 'TuneP', 'f')
+                    leg.AddEntry(h5, 'TuneP_pt', 'f')
 
 
 
@@ -152,6 +152,7 @@ if __name__ == '__main__':
         
         c1.cd()
         leg.Draw()
+
 
 
         ## Save the plots
@@ -182,7 +183,7 @@ if __name__ == '__main__':
                     prefix = 'log_'
                     c3.SetLogy(1)
                     
-                h2.GetYaxis().SetRangeUser(0, 13000);
+                h2.SetMaximum(13000)
                 h2.Draw()
                 h5.Draw("SAME")
                 leg.Draw()
