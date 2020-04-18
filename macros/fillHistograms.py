@@ -2,7 +2,7 @@
 
 >> Command: 
 
-   python fillHistograms.py --samples [samples.py] --variables [variables.py] --outputFile [output.root] 
+   python fillHistograms.py --samples samples.py --variables variables.py --outputFile output.root
 
 """
 
@@ -18,14 +18,16 @@ from math import *
 
 def createHistogram(tree, key, variable):
 
-    histo = ROOT.TH1F(key, '', 60, variable['range'][0], variable['range'][1])
+    histo = ROOT.TH1F(key, '', variable['nbins'], variable['range'][0], variable['range'][1])
     histo.GetXaxis().SetTitle(variable['label'])
     histo.GetYaxis().SetTitle('Events')
 
     for event in tree:
+        
+        if eval(variable['SafeCuts']) == False:
+            continue
 
-        value = eval(variable['name'])
-        histo.Fill(value)
+        histo.Fill(eval(variable['name']))
 
     return histo
 
@@ -77,7 +79,7 @@ if __name__ == '__main__':
 
         for key, var in variables.iteritems():
 
-            h = createHistogram(tree, sample + '_' + key, var)
+            h = createHistogram(tree, key, var)
             file_output.cd()
             h.Write()
 

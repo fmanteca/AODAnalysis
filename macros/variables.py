@@ -15,28 +15,69 @@ event.PV_vx - event.RefittedPV_vx
 
 """
 
-variables['PV_vx_diff'] = {'name' : 'event.PV_vx - event.RefittedPV_vx',
-                      'range' : [-0.02, 0.02],
-                      'binning' : 100,
-                      'label' : 'Original PV_{x} - Refitted PV_{x}'}
+variables['nMuons'] = {'name' : 'event.nMuons',
+                       'range' : [0, 4],
+                       'nbins' : 5,
+                       'label' : 'nMuons',
+                       'SafeCuts': '1'
+}
 
+variables['Muon_TuneP_pt1'] = {'name' : 'event.Muon_TunePTrack_pt[0]',
+                            'range' : [200, 3500],
+                            'nbins' : 100,
+                            'label' : 'Muon_TuneP_pt1 [GeV]',
+                            'SafeCuts' : 'event.nMuons > 0',
+}
 
-variables['PV_vy_diff'] = {'name' : 'event.PV_vy - event.RefittedPV_vy',
-                      'range' : [-0.02, 0.02],
-                      'binning' : 100,
-                      'label' : 'Original PV_{y} - Refitted PV_{y}'}
+variables['Muon_TuneP_pt2'] = {'name' : 'event.Muon_TunePTrack_pt[1]',
+                            'range' : [200, 3500],
+                            'nbins' : 100,
+                            'label' : 'Muon_TuneP_pt2 [GeV]',
+                            'SafeCuts' : 'event.nMuons > 1',
+}
 
+variables['Muon_TuneP_eta1'] = {'name' : 'event.Muon_TunePTrack_eta[0]',
+                            'range' : [200, 3500],
+                            'nbins' : 100,
+                            'label' : 'Muon_TuneP_eta1',
+                            'SafeCuts' : 'event.nMuons > 0',
+}
 
-variables['PV_vz_diff'] = {'name' : 'event.PV_vz - event.RefittedPV_vz',
-                      'range' : [-0.02, 0.02],
-                      'binning' : 100,
-                      'label' : 'Original PV_{z} - Refitted PV_{z}'}
+variables['Muon_TuneP_eta2'] = {'name' : 'event.Muon_TunePTrack_eta[1]',
+                            'range' : [200, 3500],
+                            'nbins' : 100,
+                            'label' : 'Muon_TuneP_eta2',
+                            'SafeCuts' : 'event.nMuons > 1',
+}
 
+variables['Muon_genpt1'] = {'name' : 'event.Muon_Genpt[0]',
+                            'range' : [200, 3500],
+                            'nbins' : 100,
+                            'label' : 'GenMuon_pt1 [GeV]',
+                            'SafeCuts' : 'event.nMuons > 0',
+}
 
-variables['PV_vT_diff'] = {'name' : 'sqrt(event.PV_vx*event.PV_vx + event.PV_vy*event.PV_vy) - sqrt(event.RefittedPV_vx*event.RefittedPV_vx + event.RefittedPV_vy*event.RefittedPV_vy)',
-                      'range' : [-0.05, 0.05],
-                      'binning' : 100,
-                      'label' : 'Original |PV_{T}| - Refitted |PV_{T}|'}
+variables['Muon_genpt2'] = {'name' : 'event.Muon_Genpt[1]',
+                            'range' : [200, 3500],
+                            'nbins' : 100,
+                            'label' : 'GenMuon_pt2 [GeV]',
+                            'SafeCuts' : 'event.nMuons > 1',
+}
+
+variables['Hit1_Muon1_GeomDet1_x'] = {'name' : 'event.Hit_x[0]',
+                                      'range' : [-200, 200],
+                                      'nbins' : 100,
+                                      'label' : 'Hit_Muon1_GeomDet1_x [cm]',
+                                      'SafeCuts' : '(event.nMuons > 0 and event.Muon_nGeomDets > 0 and event.Muon_nHits > 0)',
+}
+
+variables['Prop_Muon1_GeomDet1_x'] = {'name' : 'event.Prop_x[0]',
+                                      'range' : [-200, 200],
+                                      'nbins' : 100,
+                                      'label' : 'Prop_Muon1_GeomDet1_x [cm]',
+                                      'SafeCuts' : '(event.nMuons > 0 and event.Muon_nGeomDets > 0)',
+}
+
 
 
 

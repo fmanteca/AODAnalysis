@@ -1,3 +1,12 @@
+""" -> PLOT THE HISTOGRAMS <-
+
+>> Command: 
+
+   python plotHistograms.py --inputFile output.root --outputDir plots_output --log 
+
+"""
+
+
 import ROOT
 import argparse
 
@@ -45,14 +54,15 @@ if __name__ == '__main__':
     
         h = key.ReadObj()
         histo_name = str(h.GetName())
-        histo_name = histo_name.split('_', 1)
-        if histo_name[0] not in samples: samples.append(histo_name[0])
-        if histo_name[1] not in variables: variables.append(histo_name[1]) 
+        variables.append(histo_name) 
 
 
     ########## Load the colors
     colors = {}
     exec(open('colors.py', 'r'))
+    
+    for key in colors.keys():
+        samples.append(key)
 
 
     ########## Plot the histograms
@@ -89,7 +99,7 @@ if __name__ == '__main__':
         for sam in samples:
             
             #h = file_input.Get(sam + '_' + var)
-            h = eval('file_input.' + sam + '_' + var)
+            h = eval('file_input.' + var)
             tuneHistogram(h, colors[sam])
 
             if (args.norm == 'norm1'):
