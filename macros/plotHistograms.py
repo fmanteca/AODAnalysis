@@ -69,6 +69,11 @@ if __name__ == '__main__':
 
     c1 = ROOT.TCanvas('c1', '', 500, 500)
     c1.SetTicks(1,1)
+    c2 = ROOT.TCanvas('c2', '', 500, 500)
+    c2.SetTicks(1,1)
+    c3 = ROOT.TCanvas('c3', '', 500, 500)
+    c3.SetTicks(1,1)
+
     ROOT.gStyle.SetOptStat(0)
     ROOT.TGaxis.SetMaxDigits(4)
     prefix = '' # default
@@ -87,7 +92,7 @@ if __name__ == '__main__':
 
         ## Legend construction
 
-        leg = ROOT.TLegend(0.54, 0.89 - len(samples)*0.04, 0.89, 0.89)
+        leg = ROOT.TLegend(0.54, 0.89 - 3*0.04, 0.89, 0.89)
         leg.SetTextSize(0.03)
         leg.SetBorderSize(0)
 
@@ -115,15 +120,37 @@ if __name__ == '__main__':
                 h.Draw('hist same')
                 h.Draw('axis same')
 
-            leg.AddEntry(h, sam, 'f')
+
+            if not 'genpt' in var:
+                leg.AddEntry(h, sam, 'f')
 
 
 
             c+=1
+            
+            if var.startswith('Muon1'):
+                h2 = eval('file_input.' + var.replace('Muon1', 'Muon2'))
+                h2.Add(h)
+                tuneHistogram(h2, colors[sam])
+                
+                if 'genpt' in var:
+
+                    if 'genpt' in var:
+                        leg.AddEntry(h, "Gen_pt", 'f')
+
+                    txt = var.replace('genpt', 'TuneP_pt')
+                    h4 = eval('file_input.' + var.replace('genpt', 'TuneP_pt'))
+                    h5 = eval('file_input.' + txt.replace('Muon1', 'Muon2'))
+                    h5.Add(h4)
+                    h5.SetLineColor(3)
+                    h5.SetLineWidth(3)
+                    leg.AddEntry(h5, 'TuneP', 'f')
+
 
 
         ## Draw the legend:
-
+        
+        c1.cd()
         leg.Draw()
 
 
@@ -135,3 +162,34 @@ if __name__ == '__main__':
         c1.Clear()
 
 
+        if var.startswith('Muon1'):
+
+            c2.cd()
+            if (args.log): 
+                prefix = 'log_'
+                c2.SetLogy(1)
+
+            h2.Draw()
+            leg.Draw()
+            c2.SaveAs(str(args.outputDir) + prefix + str(var) + '_add_Muon2.png')
+            c2.SaveAs(str(args.outputDir )+ prefix + str(var) + '_add_Muon2.pdf')
+            
+            c2.Clear()
+
+            if 'genpt' in var:
+                c3.cd()
+                if (args.log): 
+                    prefix = 'log_'
+                    c3.SetLogy(1)
+                    
+                h2.GetYaxis().SetRangeUser(0, 13000);
+                h2.Draw()
+                h5.Draw("SAME")
+                leg.Draw()
+                c3.SaveAs(str(args.outputDir) + prefix + str(var) + '_add_Muon2_same_TunePpt.png')
+                c3.SaveAs(str(args.outputDir )+ prefix + str(var) + '_add_Muon2_sameTunePpt.pdf')
+                
+                c3.Clear()
+                
+                
+            
