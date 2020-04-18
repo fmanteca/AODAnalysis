@@ -143,6 +143,7 @@ std::vector<unsigned int> Prop_detid;
 std::vector<float> Hit_x;
 std::vector<float> Hit_y;
 std::vector<float> Hit_z;
+std::vector<float> Hit_distToProp;
 std::vector<unsigned int> Hit_detid;
 std::vector<int> Hit_hitid;
 
@@ -371,19 +372,26 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
          if(muonState.first.isValid()){
 	   
 	   iGeomDet++;
-     	   Prop_x.push_back(muonState.first.localPosition().x());
-     	   Prop_y.push_back(muonState.first.localPosition().y());
-     	   Prop_z.push_back(muonState.first.localPosition().z());
+	   float propx = muonState.first.localPosition().x();
+	   float propy = muonState.first.localPosition().y();
+	   float propz = muonState.first.localPosition().z();
+     	   Prop_x.push_back(propx);
+     	   Prop_y.push_back(propy);
+     	   Prop_z.push_back(propz);
 	   Prop_detid.push_back((*it).first->geographicalId().rawId());
 	   
 	   for(int i=0; i<(int)(*it).second.size(); i++){
-	     iHit++;
 
-	     Hit_x.push_back((*it).second.at(i)->localPosition().x()); 
-	     Hit_y.push_back((*it).second.at(i)->localPosition().y()); 
-	     Hit_z.push_back((*it).second.at(i)->localPosition().z()); 
+	     iHit++;
+	     float hitx = (*it).second.at(i)->localPosition().x();
+	     float hity = (*it).second.at(i)->localPosition().y();
+	     float hitz = (*it).second.at(i)->localPosition().z();
+	     Hit_x.push_back(hitx); 
+	     Hit_y.push_back(hity); 
+	     Hit_z.push_back(hitz); 
 	     Hit_detid.push_back((*it).first->geographicalId().rawId()); 
 	     Hit_hitid.push_back(iHit);
+	     Hit_distToProp.push_back(std::sqrt(std::pow((hitx-propx),2) + std::pow((hity-propy),2) + std::pow((propz-hitz),2)));
 	   }
 	   
      	 }
@@ -437,6 +445,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Hit_x.clear();
    Hit_y.clear();
    Hit_z.clear();
+   Hit_distToProp.clear();
    Hit_detid.clear();
    Hit_hitid.clear();
    
@@ -498,6 +507,7 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Hit_x", "vector<float>", &Hit_x);
     tree_out->Branch("Hit_y", "vector<float>", &Hit_y);
     tree_out->Branch("Hit_z", "vector<float>", &Hit_z);
+    tree_out->Branch("Hit_distToProp", "vector<float>", &Hit_distToProp);
     tree_out->Branch("Hit_detid", "vector<unsigned int>", &Hit_detid);
     tree_out->Branch("Hit_hitid", "vector<int>", &Hit_hitid);
 
