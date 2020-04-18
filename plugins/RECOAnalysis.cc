@@ -21,6 +21,7 @@
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/MuonDetId/interface/MuonSubdetId.h"
 #include "DataFormats/MuonDetId/interface/DTWireId.h"
 #include "DataFormats/MuonDetId/interface/CSCDetId.h"
@@ -33,6 +34,7 @@
 #include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
 
 #include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Photon.h"
@@ -173,6 +175,7 @@ class RECOAnalysis : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       edm::EDGetTokenT<CSCSegmentCollection> cscSegmentsToken;
 
       edm::EDGetTokenT<edm::View<reco::Muon> > theMuonCollection;
+      edm::EDGetTokenT<edm::View<reco::GenParticle> > theGenParticleCollection;
       
       std::string propagator_;
       edm::ParameterSet parameters;
@@ -189,6 +192,8 @@ RECOAnalysis::RECOAnalysis(const edm::ParameterSet& iConfig)
    parameters = iConfig;
 
    theMuonCollection = consumes<edm::View<reco::Muon> >  (parameters.getParameter<edm::InputTag>("MuonCollection"));
+   theGenParticleCollection = consumes<edm::View<reco::GenParticle> >  (parameters.getParameter<edm::InputTag>("genParticleCollection"));
+
    propagator_ = iConfig.getParameter<std::string>("Propagator");
    edm::ParameterSet serviceParameters = iConfig.getParameter<edm::ParameterSet>("ServiceParameters");
    theService = new MuonServiceProxy(serviceParameters);
@@ -219,6 +224,9 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    edm::Handle<edm::View<reco::Muon> > muons;
    iEvent.getByToken(theMuonCollection, muons);
 
+   edm::Handle<edm::View<reco::GenParticle> > genparticles;
+   iEvent.getByToken(theGenParticleCollection, genparticles);
+
    edm::Handle<DTRecSegment4DCollection> dtSegments;
    iEvent.getByToken(dtSegmentsToken, dtSegments);
 
@@ -246,11 +254,25 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
    for (auto itmuon=muons->begin(); itmuon != muons->end(); itmuon++){
 
-     if(!(itmuon->innerTrack().isNonnull())){continue;}
-     if(itmuon->innerTrack()->pt() < 200.){continue;} // High-pT muons
+     if(!(itmuon->innerTrack().isNonnull())) continue;
+     if(itmuon->innerTrack()->pt() < 200.) continue; // High-pT muons
 
-     // TO DO: MC Truth Matching + gen pT
+     //     std::cout << itmuon->
+     // MC Truth Matching + gen pT storage
+     bool GenMatch = false;
+     for (auto itgenparticle=genparticles->begin(); itgenparticle != genparticles->end(); itgenparticle++){
+
+       if(!(std::abs(itgenparticle->pdgId()) == 13 && itgenparticle->status() == 1)) continue;
+       
+       if(deltaR(*itmuon, *itgenparticle) < 0.3){
+     	 GenMatch = true;
+     	 Muon_Genpt.push_back(itgenparticle->pt());
+     	 break;
+       }else{continue;}
+     }
      
+     if(!GenMatch) continue;
+
      iMuon++;     
 
 
@@ -390,6 +412,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
    Muon_nGeomDets.clear();
    Muon_nHits.clear();
+   Muon_Genpt.clear();
    Muon_GlbTrack_pt.clear();
    Muon_GlbTrack_eta.clear();
    Muon_GlbTrack_phi.clear();
