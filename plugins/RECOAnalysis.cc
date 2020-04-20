@@ -388,10 +388,10 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
 	   
 	   for(int i=0; i<(int)(*it).second.size(); i++){
-
+	     
 	     iHit++;
 	     LocalPoint lp = (*it).second.at(i)->localPosition();
-	     GlobalPoint gp = it->first->surface().toGlobal(Local3DPoint(lp.x(),lp.y(),lp.z()));
+	     GlobalPoint gp = it->first->surface().toGlobal(lp);
 
 	     Hit_x.push_back(gp.x()); 
 	     Hit_y.push_back(gp.y()); 
