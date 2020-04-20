@@ -376,9 +376,9 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
          if(muonState.first.isValid()){
 	   
 	   iGeomDet++;
-	   float propx = muonState.first.localPosition().x();
-	   float propy = muonState.first.localPosition().y();
-	   float propz = muonState.first.localPosition().z();
+	   float propx = muonState.first.globalPosition().x();
+	   float propy = muonState.first.globalPosition().y();
+	   float propz = muonState.first.globalPosition().z();
      	   Prop_x.push_back(propx);
      	   Prop_y.push_back(propy);
      	   Prop_z.push_back(propz);
@@ -390,15 +390,15 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   for(int i=0; i<(int)(*it).second.size(); i++){
 
 	     iHit++;
-	     float hitx = (*it).second.at(i)->localPosition().x();
-	     float hity = (*it).second.at(i)->localPosition().y();
-	     float hitz = (*it).second.at(i)->localPosition().z();
-	     Hit_x.push_back(hitx); 
-	     Hit_y.push_back(hity); 
-	     Hit_z.push_back(hitz); 
+	     LocalPoint lp = (*it).second.at(i)->localPosition();
+	     GlobalPoint gp = it->first->surface().toGlobal(Local3DPoint(lp.x(),lp.y(),lp.z()));
+
+	     Hit_x.push_back(gp.x()); 
+	     Hit_y.push_back(gp.y()); 
+	     Hit_z.push_back(gp.z()); 
 	     Hit_Detid.push_back((*it).first->geographicalId().rawId()); 
 	     Hit_Hitid.push_back(iHit);
-	     Hit_distToProp.push_back(std::sqrt(std::pow((hitx-propx),2) + std::pow((hity-propy),2) + std::pow((propz-hitz),2)));
+	     Hit_distToProp.push_back(std::sqrt(std::pow((gp.x()-propx),2) + std::pow((gp.y()-propy),2) + std::pow((propz-gp.z()),2)));
 	     Hit_Muonid.push_back(iMuon);
 	     Hit_Eventid.push_back(iEvent.id().event());
 	   }
