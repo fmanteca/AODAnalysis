@@ -389,16 +389,22 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   
 	   for(int i=0; i<(int)(*it).second.size(); i++){
 	     
-	     iHit++;
 	     LocalPoint lp = (*it).second.at(i)->localPosition();
 	     GlobalPoint gp = it->first->surface().toGlobal(lp);
+	     float hitx = gp.x();
+	     float hity = gp.y();
+	     float hitz = gp.z();
+	     float distToProp = std::sqrt(std::pow((hitx-propx),2) + std::pow((hity-propy),2) + std::pow((hitz-propz),2));
 
-	     Hit_x.push_back(gp.x()); 
-	     Hit_y.push_back(gp.y()); 
-	     Hit_z.push_back(gp.z()); 
+	     if(distToProp > 10.) continue;
+	     iHit++;
+	     
+	     Hit_x.push_back(hitx); 
+	     Hit_y.push_back(hity); 
+	     Hit_z.push_back(hitz); 
 	     Hit_Detid.push_back((*it).first->geographicalId().rawId()); 
 	     Hit_Hitid.push_back(iHit);
-	     Hit_distToProp.push_back(std::sqrt(std::pow((gp.x()-propx),2) + std::pow((gp.y()-propy),2) + std::pow((propz-gp.z()),2)));
+	     Hit_distToProp.push_back(distToProp);
 	     Hit_Muonid.push_back(iMuon);
 	     Hit_Eventid.push_back(iEvent.id().event());
 	   }
