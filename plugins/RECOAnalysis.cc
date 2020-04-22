@@ -95,6 +95,34 @@
 ///////////////////////////////////// FUNCTIONS ///////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
 
+std::string getdetid(std::string subdet, int id1, int id2, int id3){
+
+  // Returns the detector element in the standard CMS nomenclature
+  // if DT: id1 = wheel, id2 = station, id3 = sector
+  // if CSC: id1 = endcap, id2 = disk, id3 = ring number
+  
+  std::string id;
+  if(subdet == "DT"){
+    id = "MB" + std::to_string(id1) + "/" +  std::to_string(id2) + "/" + std::to_string(id3);
+  }else if(subdet == "CSC"){
+    if(id1 == 1){
+      id = "ME+" +  std::to_string(id2) + "/" + std::to_string(id3);
+    }else if(id1==2){
+      id = "ME-" +  std::to_string(id2) + "/" + std::to_string(id3);
+    }
+  }
+
+  return id;
+}
+
+
+float dist3d(GlobalPoint gp1, GlobalPoint gp2){
+
+  // Returns the distance between two points (x1,y1,z1) and (x2,y2,z2) in the 3d space
+
+  return std::sqrt(std::pow((gp1.x()-gp2.x()),2) + std::pow((gp1.y()-gp2.y()),2) + std::pow((gp1.z()-gp2.z()),2));
+
+}
 
 /////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// DATA DEFINITION //////////////////////////////////
@@ -146,10 +174,12 @@ std::vector<float> Hit_x;
 std::vector<float> Hit_y;
 std::vector<float> Hit_z;
 std::vector<float> Hit_distToProp;
+std::vector<std::string> Hit_DetElement;
 std::vector<unsigned int> Hit_Detid;
 std::vector<int> Hit_Hitid;
 std::vector<int> Hit_Muonid;
 std::vector<int> Hit_Eventid;
+
 
 
 /////////////////////////////////////// OUTPUT //////////////////////////////////////
@@ -374,34 +404,54 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
      	 // Store the hit if the extrapolation is valid
          if(muonState.first.isValid()){
-	   
+	   	   
+	   GlobalPoint prop_gp = muonState.first.globalPosition();
+
+	   if(it->first->geographicalId().subdetId()  == MuonSubdetId::DT){
+	     DTWireId id(it->first->geographicalId().rawId());
+	     if(id.station() == 4 || id.station() == 3){ 
+	       if(dist3d(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 235.) continue;
+	     }else{
+	       if(dist3d(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160.) continue;
+	     }
+	   }else if(it->first->geographicalId().subdetId()  == MuonSubdetId::CSC){
+	     CSCDetId id(it->first->geographicalId().rawId());
+	     if((id.station() == 2 || id.station() == 3 || id.station() ==4) && id.ring() == 2){ 
+	       if(dist3d(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200.) continue;
+	     }else{
+	       if(dist3d(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 150.) continue;
+	     }
+	   }
+
 	   iGeomDet++;
-	   float propx = muonState.first.globalPosition().x();
-	   float propy = muonState.first.globalPosition().y();
-	   float propz = muonState.first.globalPosition().z();
-     	   Prop_x.push_back(propx);
-     	   Prop_y.push_back(propy);
-     	   Prop_z.push_back(propz);
+
+     	   Prop_x.push_back(prop_gp.x());
+     	   Prop_y.push_back(prop_gp.y());
+     	   Prop_z.push_back(prop_gp.z());
 	   Prop_Detid.push_back((*it).first->geographicalId().rawId());
 	   Prop_Muonid.push_back(iMuon);
 	   Prop_Eventid.push_back(iEvent.id().event());
 
-	   
 	   for(int i=0; i<(int)(*it).second.size(); i++){
 	     
-	     LocalPoint lp = (*it).second.at(i)->localPosition();
-	     GlobalPoint gp = it->first->surface().toGlobal(lp);
-	     float hitx = gp.x();
-	     float hity = gp.y();
-	     float hitz = gp.z();
-	     float distToProp = std::sqrt(std::pow((hitx-propx),2) + std::pow((hity-propy),2) + std::pow((hitz-propz),2));
+	     LocalPoint hit_lp = (*it).second.at(i)->localPosition();
+	     GlobalPoint hit_gp = it->first->surface().toGlobal(hit_lp);
 
-	     if(distToProp > 10.) continue;
+	     float distToProp = dist3d(hit_gp,prop_gp);
+
 	     iHit++;
-	     
-	     Hit_x.push_back(hitx); 
-	     Hit_y.push_back(hity); 
-	     Hit_z.push_back(hitz); 
+
+	     if((*it).second.at(i)->geographicalId().subdetId() == MuonSubdetId::DT){
+	       DTWireId id((*it).second.at(i)->geographicalId().rawId());
+	       Hit_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
+	     }else if((*it).second.at(i)->geographicalId().subdetId() == MuonSubdetId::CSC){
+	       CSCDetId id((*it).second.at(i)->geographicalId().rawId());
+	       Hit_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
+	     }
+
+	     Hit_x.push_back(hit_gp.x()); 
+	     Hit_y.push_back(hit_gp.y()); 
+	     Hit_z.push_back(hit_gp.z()); 
 	     Hit_Detid.push_back((*it).first->geographicalId().rawId()); 
 	     Hit_Hitid.push_back(iHit);
 	     Hit_distToProp.push_back(distToProp);
@@ -471,6 +521,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Hit_Hitid.clear();
    Hit_Muonid.clear();
    Hit_Eventid.clear();
+   Hit_DetElement.clear();
 
    
 }
@@ -540,6 +591,7 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Hit_Hitid", "vector<int>", &Hit_Hitid);
     tree_out->Branch("Hit_Muonid", "vector<int>", &Hit_Muonid);
     tree_out->Branch("Hit_Eventid", "vector<int>", &Hit_Eventid);
+    tree_out->Branch("Hit_DetElement", "vector<string>", &Hit_DetElement);
 
  
 }
