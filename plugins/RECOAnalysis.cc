@@ -168,8 +168,8 @@ std::vector<unsigned int> Prop_Detid;
 std::vector<int> Prop_Muonid;
 std::vector<int> Prop_Eventid;
 std::vector<std::string> Prop_DetElement;
-std::vector<bool> Prop_isDT;
-std::vector<bool> Prop_isCSC;
+std::vector<int> Prop_isDT;
+std::vector<int> Prop_isCSC;
 std::vector<int> Prop_DTstation;
 std::vector<int> Prop_CSCstation;
 
@@ -184,8 +184,8 @@ std::vector<unsigned int> Hit_Detid;
 std::vector<int> Hit_Hitid;
 std::vector<int> Hit_Muonid;
 std::vector<int> Hit_Eventid;
-std::vector<bool> Hit_isDT;
-std::vector<bool> Hit_isCSC;
+std::vector<int> Hit_isDT;
+std::vector<int> Hit_isCSC;
 std::vector<int> Hit_DTstation;
 std::vector<int> Hit_CSCstation;
 
@@ -408,15 +408,15 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	     DTWireId id(it->first->geographicalId().rawId());
 	     if(id.station() == 4 || id.station() == 3){ 
 	       if(dist3d(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 235.) continue;
-	       Prop_isDT.push_back(true);
-	       Prop_isCSC.push_back(false);
+	       Prop_isDT.push_back(1);
+	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
 	       Prop_CSCstation.push_back(-9999);
 	       Prop_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
 	     }else{
 	       if(dist3d(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160.) continue;
-	       Prop_isDT.push_back(true);
-	       Prop_isCSC.push_back(false);
+	       Prop_isDT.push_back(1);
+	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
 	       Prop_CSCstation.push_back(-9999);
 	       Prop_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
@@ -425,15 +425,15 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	     CSCDetId id(it->first->geographicalId().rawId());
 	     if((id.station() == 2 || id.station() == 3 || id.station() ==4) && id.ring() == 2){ 
 	       if(dist3d(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200.) continue;
-	       Prop_isDT.push_back(false);
-	       Prop_isCSC.push_back(true);
+	       Prop_isDT.push_back(0);
+	       Prop_isCSC.push_back(1);
 	       Prop_DTstation.push_back(-9999);
 	       Prop_CSCstation.push_back(id.station());
 	       Prop_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
 	     }else{
 	       if(dist3d(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 150.) continue;
-	       Prop_isDT.push_back(false);
-	       Prop_isCSC.push_back(true);
+	       Prop_isDT.push_back(0);
+	       Prop_isCSC.push_back(1);
 	       Prop_DTstation.push_back(-9999);
 	       Prop_CSCstation.push_back(id.station());
 	       Prop_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
@@ -461,15 +461,15 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	     if((*it).second.at(i)->geographicalId().subdetId() == MuonSubdetId::DT){
 	       DTWireId id((*it).second.at(i)->geographicalId().rawId());
 	       Hit_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
-	       Hit_isDT.push_back(true);
-	       Hit_isCSC.push_back(false);
+	       Hit_isDT.push_back(1);
+	       Hit_isCSC.push_back(0);
 	       Hit_DTstation.push_back(id.station());
 	       Hit_CSCstation.push_back(-9999);
 	     }else if((*it).second.at(i)->geographicalId().subdetId() == MuonSubdetId::CSC){
 	       CSCDetId id((*it).second.at(i)->geographicalId().rawId());
 	       Hit_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
-	       Hit_isDT.push_back(false);
-	       Hit_isCSC.push_back(true);
+	       Hit_isDT.push_back(0);
+	       Hit_isCSC.push_back(1);
 	       Hit_DTstation.push_back(-9999);
 	       Hit_CSCstation.push_back(id.station());
 	     }
@@ -615,8 +615,8 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Prop_Muonid", "vector<int>", &Prop_Muonid);
     tree_out->Branch("Prop_Eventid", "vector<int>", &Prop_Eventid);
     tree_out->Branch("Prop_DetElement", "vector<string>", &Prop_DetElement);
-    tree_out->Branch("Prop_isDT", "vector<bool>", &Prop_isDT);
-    tree_out->Branch("Prop_isCSC", "vector<bool>", &Prop_isCSC);
+    tree_out->Branch("Prop_isDT", "vector<int>", &Prop_isDT);
+    tree_out->Branch("Prop_isCSC", "vector<int>", &Prop_isCSC);
     tree_out->Branch("Prop_DTstation", "vector<int>", &Prop_DTstation);
     tree_out->Branch("Prop_CSCstation", "vector<int>", &Prop_CSCstation);
 
@@ -629,8 +629,8 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Hit_Muonid", "vector<int>", &Hit_Muonid);
     tree_out->Branch("Hit_Eventid", "vector<int>", &Hit_Eventid);
     tree_out->Branch("Hit_DetElement", "vector<string>", &Hit_DetElement);
-    tree_out->Branch("Hit_isDT", "vector<bool>", &Hit_isDT);
-    tree_out->Branch("Hit_isCSC", "vector<bool>", &Hit_isCSC);
+    tree_out->Branch("Hit_isDT", "vector<int>", &Hit_isDT);
+    tree_out->Branch("Hit_isCSC", "vector<int>", &Hit_isCSC);
     tree_out->Branch("Hit_DTstation", "vector<int>", &Hit_DTstation);
     tree_out->Branch("Hit_CSCstation", "vector<int>", &Hit_CSCstation);
 
