@@ -126,12 +126,6 @@ float dist2d_xz(GlobalPoint gp1, GlobalPoint gp2){
 
 }
 
-float dist2d_xz(GlobalPoint gp1, GlobalPoint gp2){
-
-  return std::sqrt(std::pow((gp1.x()-gp2.x()),2) + std::pow((gp1.z()-gp2.z()),2));
-
-}
-
 float dist2d_xy(GlobalPoint gp1, GlobalPoint gp2){
 
   return std::sqrt(std::pow((gp1.x()-gp2.x()),2) + std::pow((gp1.y()-gp2.y()),2));
@@ -443,14 +437,14 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   }else if(it->first->geographicalId().subdetId()  == MuonSubdetId::CSC){
 	     CSCDetId id(it->first->geographicalId().rawId());
 	     if((id.station() == 2 || id.station() == 3 || id.station() ==4) && id.ring() == 2){ 
-	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 185.) continue;
+	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 185.) continue;
 	       Prop_isDT.push_back(0);
 	       Prop_isCSC.push_back(1);
 	       Prop_DTstation.push_back(-9999);
 	       Prop_CSCstation.push_back(id.station());
 	       Prop_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
 	     }else{
-	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 120.) continue;
+	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 120.) continue;
 	       Prop_isDT.push_back(0);
 	       Prop_isCSC.push_back(1);
 	       Prop_DTstation.push_back(-9999);
