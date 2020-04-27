@@ -120,6 +120,24 @@ float dist3d(GlobalPoint gp1, GlobalPoint gp2){
 
 }
 
+float dist2d_xz(GlobalPoint gp1, GlobalPoint gp2){
+
+  return std::sqrt(std::pow((gp1.x()-gp2.x()),2) + std::pow((gp1.z()-gp2.z()),2));
+
+}
+
+float dist2d_xz(GlobalPoint gp1, GlobalPoint gp2){
+
+  return std::sqrt(std::pow((gp1.x()-gp2.x()),2) + std::pow((gp1.z()-gp2.z()),2));
+
+}
+
+float dist2d_xy(GlobalPoint gp1, GlobalPoint gp2){
+
+  return std::sqrt(std::pow((gp1.x()-gp2.x()),2) + std::pow((gp1.y()-gp2.y()),2));
+
+}
+
 /////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// DATA DEFINITION //////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
@@ -237,6 +255,7 @@ RECOAnalysis::RECOAnalysis(const edm::ParameterSet& iConfig)
    theGenParticleCollection = consumes<edm::View<reco::GenParticle> >  (parameters.getParameter<edm::InputTag>("genParticleCollection"));
 
    propagator_ = iConfig.getParameter<std::string>("Propagator");
+   
    edm::ParameterSet serviceParameters = iConfig.getParameter<edm::ParameterSet>("ServiceParameters");
    theService = new MuonServiceProxy(serviceParameters);
 
@@ -398,23 +417,23 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
          //Propagate
          std::pair<TrajectoryStateOnSurface, double> muonState = theService->propagator(propagator_)->propagateWithPath(outerTSOS, it->first->surface());
-
+       
      	 // Store the hit if the extrapolation is valid
          if(muonState.first.isValid()){
-	   	   
+	   std::cout << muonState.first.globalParameters() << std::endl;	   	   
 	   GlobalPoint prop_gp = muonState.first.globalPosition();
 
 	   if(it->first->geographicalId().subdetId()  == MuonSubdetId::DT){
 	     DTWireId id(it->first->geographicalId().rawId());
 	     if(id.station() == 4 || id.station() == 3){ 
-	       if(dist3d(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 235.) continue;
+	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 235.) continue;
 	       Prop_isDT.push_back(1);
 	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
 	       Prop_CSCstation.push_back(-9999);
 	       Prop_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
 	     }else{
-	       if(dist3d(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160.) continue;
+	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160.) continue;
 	       Prop_isDT.push_back(1);
 	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
@@ -424,14 +443,14 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   }else if(it->first->geographicalId().subdetId()  == MuonSubdetId::CSC){
 	     CSCDetId id(it->first->geographicalId().rawId());
 	     if((id.station() == 2 || id.station() == 3 || id.station() ==4) && id.ring() == 2){ 
-	       if(dist3d(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200.) continue;
+	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 185.) continue;
 	       Prop_isDT.push_back(0);
 	       Prop_isCSC.push_back(1);
 	       Prop_DTstation.push_back(-9999);
 	       Prop_CSCstation.push_back(id.station());
 	       Prop_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
 	     }else{
-	       if(dist3d(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 150.) continue;
+	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 120.) continue;
 	       Prop_isDT.push_back(0);
 	       Prop_isCSC.push_back(1);
 	       Prop_DTstation.push_back(-9999);
@@ -485,13 +504,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   }
 	   
      	 }
-	 
-     	 //Global coords: muonState.first.globalPosition()
 
-         //Here we have everything that we need:
-         //1.- The geomDet in order to the local/global transformations
-         //2.- The extrapolated state at the geomdet
-         //3.- The vector of hits
      }    
      
      Muon_nGeomDets.push_back(iGeomDet);
