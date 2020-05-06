@@ -31,7 +31,8 @@
 #include "DataFormats/SiStripDetId/interface/SiStripDetId.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
-
+#include "DataFormats/MuonReco/interface/MuonShower.h"
+#include "RecoMuon/MuonIdentification/interface/MuonShowerInformationFiller.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
@@ -56,6 +57,7 @@
 #include "RecoMuon/TransientTrackingRecHit/interface/MuonTransientTrackingRecHitBuilder.h"
 #include "RecoMuon/TransientTrackingRecHit/interface/MuonTransientTrackingRecHit.h"
 #include "RecoMuon/Records/interface/MuonRecoGeometryRecord.h"
+
 
 #include "Geometry/CommonDetUnit/interface/GeomDetType.h"
 #include "Geometry/CommonDetUnit/interface/GeomDet.h"
@@ -224,13 +226,13 @@ class RECOAnalysis : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
       std::string output_filename;
 
-      edm::InputTag theDTSegmentLabel, theCSCSegmentLabel;
+      edm::InputTag theDTSegmentLabel, theCSCSegmentLabel,inputMuonShowerInformationValueMap;
       edm::EDGetTokenT<DTRecSegment4DCollection> dtSegmentsToken;
       edm::EDGetTokenT<CSCSegmentCollection> cscSegmentsToken;
-
+      edm::EDGetTokenT<edm::ValueMap<reco::MuonShower> > inputMuonShowerInformationValueMapToken;
       edm::EDGetTokenT<edm::View<reco::Muon> > theMuonCollection;
       edm::EDGetTokenT<edm::View<reco::GenParticle> > theGenParticleCollection;
-      
+
       std::string propagator_;
       edm::ParameterSet parameters;
       MuonServiceProxy *theService;
@@ -257,6 +259,9 @@ RECOAnalysis::RECOAnalysis(const edm::ParameterSet& iConfig)
    theCSCSegmentLabel = iConfig.getParameter<edm::InputTag>("segmentsCSC");
    dtSegmentsToken = consumes<DTRecSegment4DCollection>(theDTSegmentLabel);
    cscSegmentsToken = consumes<CSCSegmentCollection>(theCSCSegmentLabel);
+
+   inputMuonShowerInformationValueMap = iConfig.getParameter<edm::InputTag>("inputMuonShowerInformationValueMap");
+   inputMuonShowerInformationValueMapToken =  consumes<edm::ValueMap<reco::MuonShower>>(inputMuonShowerInformationValueMap);
 
 }
 
@@ -288,6 +293,9 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    edm::Handle<CSCSegmentCollection> cscSegments;
    iEvent.getByToken(cscSegmentsToken, cscSegments);
 
+   edm::Handle<edm::ValueMap<reco::MuonShower>> muonShowerInformation;
+   iEvent.getByToken(inputMuonShowerInformationValueMapToken, muonShowerInformation);
+
    theService->update(iSetup);
 
    /////////////////////////////////// EVENT INFO //////////////////////////////////////
@@ -302,6 +310,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    int iMuon = 0;
 
    for (auto itmuon=muons->begin(); itmuon != muons->end(); itmuon++){
+
 
      if(!(itmuon->innerTrack().isNonnull())) continue;
      if(itmuon->innerTrack()->pt() < 200.) continue; // High-pT muons
@@ -407,14 +416,19 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      int iGeomDet = 0;
      //Now we do the extrapolations 
 
+     std::cout << "--> Muon: " << iMuon << std::endl;
+
      for(auto it = DetAllSegmentsMap.begin(); it != DetAllSegmentsMap.end(); it++) {
+
 
          //Propagate
          std::pair<TrajectoryStateOnSurface, double> muonState = theService->propagator(propagator_)->propagateWithPath(outerTSOS, it->first->surface());
-       
+	 
+	 if(muonState.second < 0.) continue; //backwards extrapolation
+
      	 // Store the hit if the extrapolation is valid
          if(muonState.first.isValid()){
-	   std::cout << muonState.first.globalParameters() << std::endl;	   	   
+
 	   GlobalPoint prop_gp = muonState.first.globalPosition();
 
 	   if(it->first->geographicalId().subdetId()  == MuonSubdetId::DT){
@@ -426,6 +440,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Prop_DTstation.push_back(id.station());
 	       Prop_CSCstation.push_back(-9999);
 	       Prop_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
+	       std::cout << "DetElement: " <<  getdetid("DT", id.wheel(), id.station(), id.sector()) << std::endl;
+	       std::cout << "Coords: (" << prop_gp.x() << "," << prop_gp.y() << "," << prop_gp.z() << ")" << std::endl; 
 	     }else{
 	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160.) continue;
 	       Prop_isDT.push_back(1);
@@ -433,6 +449,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Prop_DTstation.push_back(id.station());
 	       Prop_CSCstation.push_back(-9999);
 	       Prop_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
+	       std::cout << "DetElement: " <<  getdetid("DT", id.wheel(), id.station(), id.sector()) << std::endl;
+	       std::cout << "Coords: (" << prop_gp.x() << "," << prop_gp.y() << "," << prop_gp.z() << ")" << std::endl; 
 	     }
 	   }else if(it->first->geographicalId().subdetId()  == MuonSubdetId::CSC){
 	     CSCDetId id(it->first->geographicalId().rawId());
@@ -461,6 +479,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   Prop_Detid.push_back((*it).first->geographicalId().rawId());
 	   Prop_Muonid.push_back(iMuon);
 	   Prop_Eventid.push_back(iEvent.id().event());
+
+
 
 	   for(int i=0; i<(int)(*it).second.size(); i++){
 	     
@@ -506,6 +526,20 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      Muon_Muonid.push_back(iMuon);
      Muon_Eventid.push_back(iEvent.id().event());
 
+     for (int station = 0; station < 4; ++station) {
+       reco::MuonRef muonRef(muons, iMuon);
+       reco::MuonShower MuonShowerInfo = (*muonShowerInformation)[muonRef];
+     
+       // nHitsFromSegments
+       std::cout << "Station " << station << ", nHitsFromSegments: " << MuonShowerInfo.nStationCorrelatedHits.at(station) << std::endl;
+       //all hits:
+       std::cout << "Station " << station << ", allHits: " << MuonShowerInfo.nStationHits.at(station);
+       //StationShowerSizeT
+       std::cout << "Station " << station << ", ShowerSizeT: " << MuonShowerInfo.stationShowerSizeT.at(station);
+       //DeltaR
+       std::cout << "Station " << station << ", DeltaR: " << MuonShowerInfo.stationShowerDeltaR.at(station);
+     
+     }
    }
 
    Event_nMuons = iMuon;
