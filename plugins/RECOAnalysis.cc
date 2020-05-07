@@ -236,6 +236,7 @@ class RECOAnalysis : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       std::string propagator_;
       edm::ParameterSet parameters;
       MuonServiceProxy *theService;
+
   
 };
 
@@ -280,7 +281,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    /////////////////////////////////////////////////////////////////////////////////////
 
    //////////////////////////////// GET THE COLLECTIONS ////////////////////////////////
-   
+
    edm::Handle<edm::View<reco::Muon> > muons;
    iEvent.getByToken(theMuonCollection, muons);
 
@@ -310,7 +311,6 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    int iMuon = 0;
 
    for (auto itmuon=muons->begin(); itmuon != muons->end(); itmuon++){
-
 
      if(!(itmuon->innerTrack().isNonnull())) continue;
      if(itmuon->innerTrack()->pt() < 200.) continue; // High-pT muons
@@ -526,20 +526,20 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      Muon_Muonid.push_back(iMuon);
      Muon_Eventid.push_back(iEvent.id().event());
 
-     for (int station = 0; station < 4; ++station) {
-       reco::MuonRef muonRef(muons, iMuon);
-       reco::MuonShower MuonShowerInfo = (*muonShowerInformation)[muonRef];
+     // for (int station = 0; station < 4; ++station) {
+     //   //reco::MuonRef muonRef(muons, itmuon));
+     //   reco::MuonShower MuonShowerInfo = (*muonShowerInformation)[muonRef];
      
-       // nHitsFromSegments
-       std::cout << "Station " << station << ", nHitsFromSegments: " << MuonShowerInfo.nStationCorrelatedHits.at(station) << std::endl;
-       //all hits:
-       std::cout << "Station " << station << ", allHits: " << MuonShowerInfo.nStationHits.at(station);
-       //StationShowerSizeT
-       std::cout << "Station " << station << ", ShowerSizeT: " << MuonShowerInfo.stationShowerSizeT.at(station);
-       //DeltaR
-       std::cout << "Station " << station << ", DeltaR: " << MuonShowerInfo.stationShowerDeltaR.at(station);
+     //   // nHitsFromSegments
+     //   std::cout << "Station " << station << ", nHitsFromSegments: " << MuonShowerInfo.nStationCorrelatedHits.at(station) << std::endl;
+     //   //all hits:
+     //   std::cout << "Station " << station << ", allHits: " << MuonShowerInfo.nStationHits.at(station);
+     //   //StationShowerSizeT
+     //   std::cout << "Station " << station << ", ShowerSizeT: " << MuonShowerInfo.stationShowerSizeT.at(station);
+     //   //DeltaR
+     //   std::cout << "Station " << station << ", DeltaR: " << MuonShowerInfo.stationShowerDeltaR.at(station);
      
-     }
+     // }
    }
 
    Event_nMuons = iMuon;
