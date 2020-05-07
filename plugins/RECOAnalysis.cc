@@ -522,8 +522,6 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      Muon_nHits.push_back(iHit);
      Muon_Muonid.push_back(iMuon);
      Muon_Eventid.push_back(iEvent.id().event());
-     
-     }
 
      idx++;
    }
