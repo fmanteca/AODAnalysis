@@ -309,6 +309,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    ///////////////////////////////// GET MUON VARIABLES ////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
    int iMuon = 0;
+   unsigned int idx = 0;
 
    for (auto itmuon=muons->begin(); itmuon != muons->end(); itmuon++){
 
@@ -416,7 +417,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      int iGeomDet = 0;
      //Now we do the extrapolations 
 
-     std::cout << "--> Muon: " << iMuon << std::endl;
+     //std::cout << "--> Muon: " << iMuon << std::endl;
 
      for(auto it = DetAllSegmentsMap.begin(); it != DetAllSegmentsMap.end(); it++) {
 
@@ -440,8 +441,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Prop_DTstation.push_back(id.station());
 	       Prop_CSCstation.push_back(-9999);
 	       Prop_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
-	       std::cout << "DetElement: " <<  getdetid("DT", id.wheel(), id.station(), id.sector()) << std::endl;
-	       std::cout << "Coords: (" << prop_gp.x() << "," << prop_gp.y() << "," << prop_gp.z() << ")" << std::endl; 
+	       //std::cout << "DetElement: " <<  getdetid("DT", id.wheel(), id.station(), id.sector()) << std::endl;
+	       //std::cout << "Coords: (" << prop_gp.x() << "," << prop_gp.y() << "," << prop_gp.z() << ")" << std::endl; 
 	     }else{
 	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160.) continue;
 	       Prop_isDT.push_back(1);
@@ -449,8 +450,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Prop_DTstation.push_back(id.station());
 	       Prop_CSCstation.push_back(-9999);
 	       Prop_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
-	       std::cout << "DetElement: " <<  getdetid("DT", id.wheel(), id.station(), id.sector()) << std::endl;
-	       std::cout << "Coords: (" << prop_gp.x() << "," << prop_gp.y() << "," << prop_gp.z() << ")" << std::endl; 
+	       //std::cout << "DetElement: " <<  getdetid("DT", id.wheel(), id.station(), id.sector()) << std::endl;
+	       //std::cout << "Coords: (" << prop_gp.x() << "," << prop_gp.y() << "," << prop_gp.z() << ")" << std::endl; 
 	     }
 	   }else if(it->first->geographicalId().subdetId()  == MuonSubdetId::CSC){
 	     CSCDetId id(it->first->geographicalId().rawId());
@@ -526,20 +527,25 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      Muon_Muonid.push_back(iMuon);
      Muon_Eventid.push_back(iEvent.id().event());
 
-     // for (int station = 0; station < 4; ++station) {
-     //   //reco::MuonRef muonRef(muons, itmuon));
-     //   reco::MuonShower MuonShowerInfo = (*muonShowerInformation)[muonRef];
+     for (int station = 0; station < 4; ++station) {
+       //reco::MuonRef muonRef(muons, itmuon));
+       edm::RefToBase<reco::Muon> muRefTmp = muons->refAt(idx);
+       reco::CandidateBaseRef muonBaseRef(muRefTmp);
+
+       reco::MuonShower MuonShowerInfo = (*muonShowerInformation)[muRefTmp];
      
-     //   // nHitsFromSegments
-     //   std::cout << "Station " << station << ", nHitsFromSegments: " << MuonShowerInfo.nStationCorrelatedHits.at(station) << std::endl;
-     //   //all hits:
-     //   std::cout << "Station " << station << ", allHits: " << MuonShowerInfo.nStationHits.at(station);
-     //   //StationShowerSizeT
-     //   std::cout << "Station " << station << ", ShowerSizeT: " << MuonShowerInfo.stationShowerSizeT.at(station);
-     //   //DeltaR
-     //   std::cout << "Station " << station << ", DeltaR: " << MuonShowerInfo.stationShowerDeltaR.at(station);
+       // nHitsFromSegments
+       std::cout << "Station " << station << ", nHitsFromSegments: " << MuonShowerInfo.nStationCorrelatedHits.at(station) << std::endl;
+       //all hits:
+       std::cout << "Station " << station << ", allHits: " << MuonShowerInfo.nStationHits.at(station) << std::endl;
+       //StationShowerSizeT
+       std::cout << "Station " << station << ", ShowerSizeT: " << MuonShowerInfo.stationShowerSizeT.at(station) << std::endl;
+       //DeltaR
+       std::cout << "Station " << station << ", DeltaR: " << MuonShowerInfo.stationShowerDeltaR.at(station) << std::endl;
      
-     // }
+     }
+
+     idx++;
    }
 
    Event_nMuons = iMuon;
