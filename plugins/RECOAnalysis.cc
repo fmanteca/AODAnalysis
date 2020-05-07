@@ -113,7 +113,6 @@ std::string getdetid(std::string subdet, int id1, int id2, int id3){
   return id;
 }
 
-
 float dist3d(GlobalPoint gp1, GlobalPoint gp2){
 
   // Returns the distance between two points (x1,y1,z1) and (x2,y2,z2) in the 3d space
@@ -236,7 +235,6 @@ class RECOAnalysis : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       std::string propagator_;
       edm::ParameterSet parameters;
       MuonServiceProxy *theService;
-
   
 };
 
@@ -417,10 +415,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      int iGeomDet = 0;
      //Now we do the extrapolations 
 
-     //std::cout << "--> Muon: " << iMuon << std::endl;
-
      for(auto it = DetAllSegmentsMap.begin(); it != DetAllSegmentsMap.end(); it++) {
-
 
          //Propagate
          std::pair<TrajectoryStateOnSurface, double> muonState = theService->propagator(propagator_)->propagateWithPath(outerTSOS, it->first->surface());
@@ -432,10 +427,14 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
 	   GlobalPoint prop_gp = muonState.first.globalPosition();
 
+	   edm::RefToBase<reco::Muon> muRefTmp = muons->refAt(idx);
+	   reco::CandidateBaseRef muonBaseRef(muRefTmp);
+	   reco::MuonShower MuonShowerInfo = (*muonShowerInformation)[muonBaseRef];
+
 	   if(it->first->geographicalId().subdetId()  == MuonSubdetId::DT){
 	     DTWireId id(it->first->geographicalId().rawId());
 	     if(id.station() == 4 || id.station() == 3){ 
-	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 235.) continue;
+	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 235. && MuonShowerInfo.stationShowerSizeT.at(id.station() - 1) < 235.) continue;
 	       Prop_isDT.push_back(1);
 	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
@@ -444,26 +443,24 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       //std::cout << "DetElement: " <<  getdetid("DT", id.wheel(), id.station(), id.sector()) << std::endl;
 	       //std::cout << "Coords: (" << prop_gp.x() << "," << prop_gp.y() << "," << prop_gp.z() << ")" << std::endl; 
 	     }else{
-	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160.) continue;
+	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160. && MuonShowerInfo.stationShowerSizeT.at(id.station() - 1) < 160.) continue;
 	       Prop_isDT.push_back(1);
 	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
 	       Prop_CSCstation.push_back(-9999);
 	       Prop_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
-	       //std::cout << "DetElement: " <<  getdetid("DT", id.wheel(), id.station(), id.sector()) << std::endl;
-	       //std::cout << "Coords: (" << prop_gp.x() << "," << prop_gp.y() << "," << prop_gp.z() << ")" << std::endl; 
 	     }
 	   }else if(it->first->geographicalId().subdetId()  == MuonSubdetId::CSC){
 	     CSCDetId id(it->first->geographicalId().rawId());
 	     if((id.station() == 2 || id.station() == 3 || id.station() ==4) && id.ring() == 2){ 
-	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 185.) continue;
+	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 185. && MuonShowerInfo.stationShowerSizeT.at(id.station() - 1) < 185.) continue;
 	       Prop_isDT.push_back(0);
 	       Prop_isCSC.push_back(1);
 	       Prop_DTstation.push_back(-9999);
 	       Prop_CSCstation.push_back(id.station());
 	       Prop_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
 	     }else{
-	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 120.) continue;
+	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 120. && MuonShowerInfo.stationShowerSizeT.at(id.station() - 1) < 120.) continue;
 	       Prop_isDT.push_back(0);
 	       Prop_isCSC.push_back(1);
 	       Prop_DTstation.push_back(-9999);
@@ -480,7 +477,6 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   Prop_Detid.push_back((*it).first->geographicalId().rawId());
 	   Prop_Muonid.push_back(iMuon);
 	   Prop_Eventid.push_back(iEvent.id().event());
-
 
 
 	   for(int i=0; i<(int)(*it).second.size(); i++){
@@ -526,22 +522,6 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      Muon_nHits.push_back(iHit);
      Muon_Muonid.push_back(iMuon);
      Muon_Eventid.push_back(iEvent.id().event());
-
-     for (int station = 0; station < 4; ++station) {
-       //reco::MuonRef muonRef(muons, itmuon));
-       edm::RefToBase<reco::Muon> muRefTmp = muons->refAt(idx);
-       reco::CandidateBaseRef muonBaseRef(muRefTmp);
-
-       reco::MuonShower MuonShowerInfo = (*muonShowerInformation)[muRefTmp];
-     
-       // nHitsFromSegments
-       std::cout << "Station " << station << ", nHitsFromSegments: " << MuonShowerInfo.nStationCorrelatedHits.at(station) << std::endl;
-       //all hits:
-       std::cout << "Station " << station << ", allHits: " << MuonShowerInfo.nStationHits.at(station) << std::endl;
-       //StationShowerSizeT
-       std::cout << "Station " << station << ", ShowerSizeT: " << MuonShowerInfo.stationShowerSizeT.at(station) << std::endl;
-       //DeltaR
-       std::cout << "Station " << station << ", DeltaR: " << MuonShowerInfo.stationShowerDeltaR.at(station) << std::endl;
      
      }
 
