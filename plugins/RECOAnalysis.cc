@@ -57,7 +57,7 @@
 #include "RecoMuon/TransientTrackingRecHit/interface/MuonTransientTrackingRecHitBuilder.h"
 #include "RecoMuon/TransientTrackingRecHit/interface/MuonTransientTrackingRecHit.h"
 #include "RecoMuon/Records/interface/MuonRecoGeometryRecord.h"
-
+#include "RecoMuon/GlobalTrackingTools/interface/StateSegmentMatcher.h"
 
 #include "Geometry/CommonDetUnit/interface/GeomDetType.h"
 #include "Geometry/CommonDetUnit/interface/GeomDet.h"
@@ -201,6 +201,7 @@ std::vector<int> Hit_isDT;
 std::vector<int> Hit_isCSC;
 std::vector<int> Hit_DTstation;
 std::vector<int> Hit_CSCstation;
+std::vector<float> Hit_Compatibility;
 
 /////////////////////////////////////// OUTPUT //////////////////////////////////////
 
@@ -488,6 +489,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
 	     iHit++;
 
+
 	     if((*it).second.at(i)->geographicalId().subdetId() == MuonSubdetId::DT){
 	       DTWireId id((*it).second.at(i)->geographicalId().rawId());
 	       Hit_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
@@ -495,6 +497,10 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Hit_isCSC.push_back(0);
 	       Hit_DTstation.push_back(id.station());
 	       Hit_CSCstation.push_back(-9999);
+	       DTRecSegment4D *mySegment = dynamic_cast<DTRecSegment4D *>((*it).second.at(i));
+	       StateSegmentMatcher SegmentComp(muonState.first, *mySegment, mySegment->localDirectionError());
+	       Hit_Compatibility.push_back(SegmentComp.value());
+	       std::cout << SegmentComp.value() << std::endl;
 	     }else if((*it).second.at(i)->geographicalId().subdetId() == MuonSubdetId::CSC){
 	       CSCDetId id((*it).second.at(i)->geographicalId().rawId());
 	       Hit_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
@@ -502,6 +508,9 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Hit_isCSC.push_back(1);
 	       Hit_DTstation.push_back(-9999);
 	       Hit_CSCstation.push_back(id.station());
+	       CSCSegment *mySegment = dynamic_cast<CSCSegment *>((*it).second.at(i));
+	       StateSegmentMatcher SegmentComp(muonState.first, *mySegment, mySegment->localDirectionError());
+	       Hit_Compatibility.push_back(SegmentComp.value());
 	     }
 
 	     Hit_x.push_back(hit_gp.x()); 
@@ -581,6 +590,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Hit_isCSC.clear();
    Hit_DTstation.clear();
    Hit_CSCstation.clear();
+   Hit_Compatibility.clear();
 
 }
 
@@ -658,6 +668,7 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Hit_isCSC", "vector<int>", &Hit_isCSC);
     tree_out->Branch("Hit_DTstation", "vector<int>", &Hit_DTstation);
     tree_out->Branch("Hit_CSCstation", "vector<int>", &Hit_CSCstation);
+    tree_out->Branch("Hit_Compatibility", "vector<float>", &Hit_Compatibility);
 
 }
 
