@@ -497,10 +497,9 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Hit_isCSC.push_back(0);
 	       Hit_DTstation.push_back(id.station());
 	       Hit_CSCstation.push_back(-9999);
-	       DTRecSegment4D *mySegment = (DTRecSegment4D *)&((*it).second.at(i));
+	       DTRecSegment4D *mySegment = dynamic_cast<DTRecSegment4D *>((*it).second.at(i));
 	       StateSegmentMatcher SegmentComp(outerTSOS, *mySegment, mySegment->localDirectionError());
 	       Hit_Compatibility.push_back(SegmentComp.value());
-	       std::cout << SegmentComp.value() << std::endl;
 	     }else if((*it).second.at(i)->geographicalId().subdetId() == MuonSubdetId::CSC){
 	       CSCDetId id((*it).second.at(i)->geographicalId().rawId());
 	       Hit_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
@@ -508,7 +507,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Hit_isCSC.push_back(1);
 	       Hit_DTstation.push_back(-9999);
 	       Hit_CSCstation.push_back(id.station());
-	       CSCSegment *mySegment = (CSCSegment *)&((*it).second.at(i));
+	       CSCSegment *mySegment = dynamic_cast<CSCSegment *>((*it).second.at(i));
 	       StateSegmentMatcher SegmentComp(outerTSOS, *mySegment, mySegment->localDirectionError());
 	       Hit_Compatibility.push_back(SegmentComp.value());
 	     }
