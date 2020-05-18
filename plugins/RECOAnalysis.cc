@@ -498,8 +498,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Hit_DTstation.push_back(id.station());
 	       Hit_CSCstation.push_back(-9999);
 	       DTRecSegment4D *mySegment = (DTRecSegment4D *)&((*it).second.at(i));
-	       //DTRecSegment4D *mySegment = dynamic_cast<DTRecSegment4D *>((*it).second.at(i));
-	       StateSegmentMatcher SegmentComp(muonState.first, *mySegment, mySegment->localDirectionError());
+	       StateSegmentMatcher SegmentComp(outerTSOS, *mySegment, mySegment->localDirectionError());
 	       Hit_Compatibility.push_back(SegmentComp.value());
 	       std::cout << SegmentComp.value() << std::endl;
 	     }else if((*it).second.at(i)->geographicalId().subdetId() == MuonSubdetId::CSC){
