@@ -202,6 +202,11 @@ std::vector<int> Hit_isCSC;
 std::vector<int> Hit_DTstation;
 std::vector<int> Hit_CSCstation;
 std::vector<float> Hit_Compatibility;
+std::vector<float> Hit_dirx;
+std::vector<float> Hit_diry;
+std::vector<float> Hit_dirz;
+std::vector<float> Hit_chi2;
+
 
 /////////////////////////////////////// OUTPUT //////////////////////////////////////
 
@@ -500,6 +505,11 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       DTRecSegment4D *mySegment = dynamic_cast<DTRecSegment4D *>((*it).second.at(i));
 	       StateSegmentMatcher SegmentComp(outerTSOS, *mySegment, mySegment->localDirectionError());
 	       Hit_Compatibility.push_back(SegmentComp.value());
+	       GlobalVector gv = it->first->surface().toGlobal(mySegment->localDirection());
+	       Hit_dirx.push_back(gv.x());
+	       Hit_diry.push_back(gv.y());
+	       Hit_dirz.push_back(gv.z());
+	       Hit_chi2.push_back(mySegment->chi2());
 	     }else if((*it).second.at(i)->geographicalId().subdetId() == MuonSubdetId::CSC){
 	       CSCDetId id((*it).second.at(i)->geographicalId().rawId());
 	       Hit_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
@@ -510,6 +520,12 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       CSCSegment *mySegment = dynamic_cast<CSCSegment *>((*it).second.at(i));
 	       StateSegmentMatcher SegmentComp(outerTSOS, *mySegment, mySegment->localDirectionError());
 	       Hit_Compatibility.push_back(SegmentComp.value());
+	       GlobalVector gv = it->first->surface().toGlobal(mySegment->localDirection());
+	       Hit_dirx.push_back(gv.x());
+	       Hit_diry.push_back(gv.y());
+	       Hit_dirz.push_back(gv.z());
+	       Hit_chi2.push_back(mySegment->chi2());
+
 	     }
 
 	     Hit_x.push_back(hit_gp.x()); 
@@ -590,6 +606,11 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Hit_DTstation.clear();
    Hit_CSCstation.clear();
    Hit_Compatibility.clear();
+   Hit_dirx.clear();
+   Hit_diry.clear();
+   Hit_dirz.clear();
+   Hit_chi2.clear();
+
 
 }
 
@@ -668,6 +689,11 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Hit_DTstation", "vector<int>", &Hit_DTstation);
     tree_out->Branch("Hit_CSCstation", "vector<int>", &Hit_CSCstation);
     tree_out->Branch("Hit_Compatibility", "vector<float>", &Hit_Compatibility);
+    tree_out->Branch("Hit_dirx", "vector<float>", &Hit_dirx);
+    tree_out->Branch("Hit_diry", "vector<float>", &Hit_diry);
+    tree_out->Branch("Hit_dirz", "vector<float>", &Hit_dirz);
+    tree_out->Branch("Hit_chi2", "vector<float>", &Hit_chi2);
+
 
 }
 

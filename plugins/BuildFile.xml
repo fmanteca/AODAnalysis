@@ -23,4 +23,5 @@
 <use name="RecoVertex/AdaptiveVertexFit"/>
 <use name="RecoVertex/TrimmedVertexFit"/>
 <use name="RecoVertex/VertexTools"/>
+<use name="RecoMuon/GlobalTrackingTools"/>
 <flags EDM_PLUGIN="1"/>
