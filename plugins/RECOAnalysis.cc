@@ -206,7 +206,7 @@ std::vector<float> Hit_dirx;
 std::vector<float> Hit_diry;
 std::vector<float> Hit_dirz;
 std::vector<float> Hit_chi2;
-
+std::vector<int> Hit_ndof;
 
 /////////////////////////////////////// OUTPUT //////////////////////////////////////
 
@@ -510,6 +510,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Hit_diry.push_back(gv.y());
 	       Hit_dirz.push_back(gv.z());
 	       Hit_chi2.push_back(mySegment->chi2());
+	       Hit_ndof.push_back(mySegment->degreesOfFreedom());
 	     }else if((*it).second.at(i)->geographicalId().subdetId() == MuonSubdetId::CSC){
 	       CSCDetId id((*it).second.at(i)->geographicalId().rawId());
 	       Hit_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
@@ -525,7 +526,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Hit_diry.push_back(gv.y());
 	       Hit_dirz.push_back(gv.z());
 	       Hit_chi2.push_back(mySegment->chi2());
-
+	       Hit_ndof.push_back(mySegment->degreesOfFreedom());
 	     }
 
 	     Hit_x.push_back(hit_gp.x()); 
@@ -610,7 +611,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Hit_diry.clear();
    Hit_dirz.clear();
    Hit_chi2.clear();
-
+   Hit_ndof.clear();
 
 }
 
@@ -693,6 +694,7 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Hit_diry", "vector<float>", &Hit_diry);
     tree_out->Branch("Hit_dirz", "vector<float>", &Hit_dirz);
     tree_out->Branch("Hit_chi2", "vector<float>", &Hit_chi2);
+    tree_out->Branch("Hit_ndof", "vector<int>", &Hit_ndof);
 
 
 }
