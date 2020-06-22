@@ -376,9 +376,14 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      for (auto itHit = dtSegments->begin(); itHit != dtSegments->end(); itHit++) {
        
        //Only valid segments & hasZ & hasPhi
-       if(!itHit->isValid() || !itHit->hasPhi() || !itHit->hasZed()) continue;
+       if(!itHit->isValid() || !itHit->hasPhi()) continue;
        DetId myDet = itHit->geographicalId();
        const GeomDet *geomDet = theService->trackingGeometry()->idToDet(myDet);
+
+       if(geomDet->geographicalId().subdetId()  == MuonSubdetId::DT){
+	 DTWireId id(geomDet->geographicalId().rawId());
+	 if(id.station() != 4 && !itHit->hasZed()){continue;}
+       }
 
        //Get the GeomDet associated to this DetId
        std::map<const GeomDet*, std::vector<TrackingRecHit *> >::iterator it = DetAllSegmentsMap.find(geomDet);
@@ -446,7 +451,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   if(it->first->geographicalId().subdetId()  == MuonSubdetId::DT){
 	     DTWireId id(it->first->geographicalId().rawId());
 	     if(id.station() == 4){
-	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 400) continue;
+	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200) continue;
 	       Prop_isDT.push_back(1);
 	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
