@@ -451,7 +451,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   if(it->first->geographicalId().subdetId()  == MuonSubdetId::DT){
 	     DTWireId id(it->first->geographicalId().rawId());
 	     if(id.station() == 4){
-	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200) continue;
+	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 400) continue;
 	       Prop_isDT.push_back(1);
 	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
@@ -459,7 +459,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Prop_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
 	     }else if(id.station() == 3){ 
 	       //if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 235. && MuonShowerInfo.stationShowerSizeT.at(id.station() - 1) < 235.) continue;
-	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 235.) continue;
+	       //if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 235.) continue;
+	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 350.) continue;
 	       Prop_isDT.push_back(1);
 	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
@@ -469,7 +470,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       //std::cout << "Coords: (" << prop_gp.x() << "," << prop_gp.y() << "," << prop_gp.z() << ")" << std::endl; 
 	     }else{
 	       //if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160. && MuonShowerInfo.stationShowerSizeT.at(id.station() - 1) < 160.) continue;
-	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160.) continue;
+	       //if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160.) continue;
+	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 220.) continue;
 	       Prop_isDT.push_back(1);
 	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
@@ -480,7 +482,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	     CSCDetId id(it->first->geographicalId().rawId());
 	     if((id.station() == 2 || id.station() == 3 || id.station() ==4) && id.ring() == 2){ 
 	       //if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 185. && MuonShowerInfo.stationShowerSizeT.at(id.station() - 1) < 185.) continue;
-	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 185.) continue;
+	       //if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 185.) continue;
+	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200.) continue;
 	       Prop_isDT.push_back(0);
 	       Prop_isCSC.push_back(1);
 	       Prop_DTstation.push_back(-9999);
@@ -488,7 +491,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Prop_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
 	     }else{
 	       //if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 120. && MuonShowerInfo.stationShowerSizeT.at(id.station() - 1) < 120.) continue;
-	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 120.) continue;
+	       //if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 120.) continue;
+	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200.) continue;
 	       Prop_isDT.push_back(0);
 	       Prop_isCSC.push_back(1);
 	       Prop_DTstation.push_back(-9999);
