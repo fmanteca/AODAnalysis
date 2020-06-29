@@ -383,9 +383,10 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
        if(geomDet->geographicalId().subdetId()  == MuonSubdetId::DT){
 	 DTWireId id(geomDet->geographicalId().rawId());
 	 if(id.station() != 4 && !itHit->hasZed()){continue;}
+	 if(id.station() != 4 && itHit->dimension()!=4){continue;}
        }
        
-       if(itHit->dimension() < 4) continue;
+
 
        //Get the GeomDet associated to this DetId
        std::map<const GeomDet*, std::vector<TrackingRecHit *> >::iterator it = DetAllSegmentsMap.find(geomDet);
