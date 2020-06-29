@@ -186,7 +186,6 @@ std::vector<float> Prop_z;
 std::vector<unsigned int> Prop_Detid;
 std::vector<int> Prop_Muonid;
 std::vector<int> Prop_Eventid;
-std::vector<int> Prop_Hitid;
 std::vector<std::string> Prop_DetElement;
 std::vector<int> Prop_isDT;
 std::vector<int> Prop_isCSC;
@@ -510,8 +509,6 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   Prop_Detid.push_back((*it).first->geographicalId().rawId());
 	   Prop_Muonid.push_back(iMuon);
 	   Prop_Eventid.push_back(iEvent.id().event());
-	   Prop_Hitid.push_back(iHit);
-
 
 	   for(int i=0; i<(int)(*it).second.size(); i++){
 	     
@@ -521,7 +518,6 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	     float distToProp = dist3d(hit_gp,prop_gp);
 
 	     iHit++;
-
 
 	     if((*it).second.at(i)->geographicalId().subdetId() == MuonSubdetId::DT){
 	       DTWireId id((*it).second.at(i)->geographicalId().rawId());
@@ -626,7 +622,6 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Prop_z.clear();
    Prop_Detid.clear();
    Prop_Muonid.clear();
-   Prop_Hitid.clear();
    Prop_Eventid.clear();
    Prop_isDT.clear();
    Prop_isCSC.clear();
@@ -711,7 +706,6 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Prop_Detid", "vector<unsigned int>", &Prop_Detid);
     tree_out->Branch("Prop_Muonid", "vector<int>", &Prop_Muonid);
     tree_out->Branch("Prop_Eventid", "vector<int>", &Prop_Eventid);
-    tree_out->Branch("Prop_Hitid", "vector<int>", &Prop_Hitid);
     tree_out->Branch("Prop_DetElement", "vector<string>", &Prop_DetElement);
     tree_out->Branch("Prop_isDT", "vector<int>", &Prop_isDT);
     tree_out->Branch("Prop_isCSC", "vector<int>", &Prop_isCSC);
