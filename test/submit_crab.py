@@ -25,7 +25,7 @@ config.Data.outLFNDirBase = '/store/user/fernanpe/'
 config.Data.publication = False
 config.Data.outputDatasetTag = 'ZprimeToMuMu_M-5000_ntupler'
 
-config.Data.inputDataset = '/ZprimeToMuMu_M-5000_TuneCP5_13TeV-madgraphMLM-pythia8/fernanpe-ZprimeToMuMu_M-5000_step2-900573cea688b54324a7e4af95ae2c49/USER'
+config.Data.inputDataset = '/CRAB_PrivateMC/fernanpe-ZprimeToMuMu5000_GEN_SIM_PREMIX_RECO-900573cea688b54324a7e4af95ae2c49/USER'
 
 
 config.section_("Site")
