@@ -175,6 +175,7 @@ std::vector<float> Muon_TunePTrack_ptErr;
 std::vector<float> Muon_TunePTrack_Chindf;
 std::vector<int> Muon_Muonid;
 std::vector<int> Muon_Eventid;
+std::vector<int> Muon_EventluminosityBlock;
 std::vector<int> Muon_nGeomDets;
 std::vector<int> Muon_nHits;
 
@@ -186,6 +187,7 @@ std::vector<float> Prop_z;
 std::vector<unsigned int> Prop_Detid;
 std::vector<int> Prop_Muonid;
 std::vector<int> Prop_Eventid;
+std::vector<int> Prop_EventluminosityBlock;
 std::vector<std::string> Prop_DetElement;
 std::vector<int> Prop_isDT;
 std::vector<int> Prop_isCSC;
@@ -203,6 +205,7 @@ std::vector<unsigned int> Hit_Detid;
 std::vector<int> Hit_Hitid;
 std::vector<int> Hit_Muonid;
 std::vector<int> Hit_Eventid;
+std::vector<int> Hit_EventluminosityBlock;
 std::vector<int> Hit_isDT;
 std::vector<int> Hit_isCSC;
 std::vector<int> Hit_DTstation;
@@ -454,7 +457,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   if(it->first->geographicalId().subdetId()  == MuonSubdetId::DT){
 	     DTWireId id(it->first->geographicalId().rawId());
 	     if(id.station() == 4){
-	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 350) continue;
+	       //if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 350) continue;
+	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 260) continue;
 	       Prop_isDT.push_back(1);
 	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
@@ -462,8 +466,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Prop_DetElement.push_back(getdetid("DT", id.wheel(), id.station(), id.sector()));
 	     }else if(id.station() == 3){ 
 	       //if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 235. && MuonShowerInfo.stationShowerSizeT.at(id.station() - 1) < 235.) continue;
-	       //if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 235.) continue;
-	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 300.) continue;
+	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 235.) continue;
+	       //if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 300.) continue;
 	       Prop_isDT.push_back(1);
 	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
@@ -473,8 +477,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       //std::cout << "Coords: (" << prop_gp.x() << "," << prop_gp.y() << "," << prop_gp.z() << ")" << std::endl; 
 	     }else{
 	       //if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160. && MuonShowerInfo.stationShowerSizeT.at(id.station() - 1) < 160.) continue;
-	       //if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160.) continue;
-	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200.) continue;
+	       if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 160.) continue;
+	       //if(dist2d_xz(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200.) continue;
 	       Prop_isDT.push_back(1);
 	       Prop_isCSC.push_back(0);
 	       Prop_DTstation.push_back(id.station());
@@ -485,8 +489,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	     CSCDetId id(it->first->geographicalId().rawId());
 	     if((id.station() == 2 || id.station() == 3 || id.station() ==4) && id.ring() == 2){ 
 	       //if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 185. && MuonShowerInfo.stationShowerSizeT.at(id.station() - 1) < 185.) continue;
-	       //if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 185.) continue;
-	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200.) continue;
+	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 185.) continue;
+	       //if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200.) continue;
 	       Prop_isDT.push_back(0);
 	       Prop_isCSC.push_back(1);
 	       Prop_DTstation.push_back(-9999);
@@ -494,8 +498,8 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	       Prop_DetElement.push_back(getdetid("CSC", id.endcap(), id.station(), id.ring()));
 	     }else{
 	       //if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 120. && MuonShowerInfo.stationShowerSizeT.at(id.station() - 1) < 120.) continue;
-	       //if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 120.) continue;
-	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200.) continue;
+	       if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 120.) continue;
+	       //if(dist2d_xy(prop_gp, it->first->surface().toGlobal(Local3DPoint(0.,0.,0.))) > 200.) continue;
 	       Prop_isDT.push_back(0);
 	       Prop_isCSC.push_back(1);
 	       Prop_DTstation.push_back(-9999);
@@ -512,6 +516,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   Prop_Detid.push_back((*it).first->geographicalId().rawId());
 	   Prop_Muonid.push_back(iMuon);
 	   Prop_Eventid.push_back(iEvent.id().event());
+	   Prop_EventluminosityBlock.push_back(iEvent.id().luminosityBlock());
 
 	   for(int i=0; i<(int)(*it).second.size(); i++){
 	     
@@ -575,6 +580,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	     Hit_distToProp.push_back(distToProp);
 	     Hit_Muonid.push_back(iMuon);
 	     Hit_Eventid.push_back(iEvent.id().event());
+	     Hit_EventluminosityBlock.push_back(iEvent.id().luminosityBlock());
 	   }
 	   
      	 }
@@ -585,6 +591,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      Muon_nHits.push_back(iHit);
      Muon_Muonid.push_back(iMuon);
      Muon_Eventid.push_back(iEvent.id().event());
+     Muon_EventluminosityBlock.push_back(iEvent.id().luminosityBlock());
 
      idx++;
    }
@@ -599,6 +606,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
    Muon_Muonid.clear();
    Muon_Eventid.clear();
+   Muon_EventluminosityBlock.clear();
    Muon_nGeomDets.clear();
    Muon_nHits.clear();
    Muon_Genpt.clear();
@@ -626,6 +634,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Prop_Detid.clear();
    Prop_Muonid.clear();
    Prop_Eventid.clear();
+   Prop_EventluminosityBlock.clear();
    Prop_isDT.clear();
    Prop_isCSC.clear();
    Prop_DTstation.clear();
@@ -640,6 +649,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Hit_Hitid.clear();
    Hit_Muonid.clear();
    Hit_Eventid.clear();
+   Hit_EventluminosityBlock.clear();
    Hit_DetElement.clear();
    Hit_isDT.clear();
    Hit_isCSC.clear();
@@ -678,6 +688,7 @@ void RECOAnalysis::beginJob()
     // ////////////////////////////// MUON BRANCHES //////////////////////////////
 
     tree_out->Branch("Muon_Eventid", "vector<int>", &Muon_Eventid);
+    tree_out->Branch("Muon_EventluminosityBlock", "vector<int>", &Muon_EventluminosityBlock);
     tree_out->Branch("Muon_Muonid",  "vector<int>", &Muon_Muonid);
     tree_out->Branch("Muon_Genpt", "vector<float>", &Muon_Genpt);
     tree_out->Branch("Muon_GlbTrack_pt", "vector<float>", &Muon_GlbTrack_pt);
@@ -709,6 +720,7 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Prop_Detid", "vector<unsigned int>", &Prop_Detid);
     tree_out->Branch("Prop_Muonid", "vector<int>", &Prop_Muonid);
     tree_out->Branch("Prop_Eventid", "vector<int>", &Prop_Eventid);
+    tree_out->Branch("Prop_EventluminosityBlock", "vector<int>", &Prop_EventluminosityBlock);
     tree_out->Branch("Prop_DetElement", "vector<string>", &Prop_DetElement);
     tree_out->Branch("Prop_isDT", "vector<int>", &Prop_isDT);
     tree_out->Branch("Prop_isCSC", "vector<int>", &Prop_isCSC);
@@ -723,6 +735,7 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Hit_Hitid", "vector<int>", &Hit_Hitid);
     tree_out->Branch("Hit_Muonid", "vector<int>", &Hit_Muonid);
     tree_out->Branch("Hit_Eventid", "vector<int>", &Hit_Eventid);
+    tree_out->Branch("Hit_EventluminosityBlock", "vector<int>", &Hit_EventluminosityBlock);
     tree_out->Branch("Hit_DetElement", "vector<string>", &Hit_DetElement);
     tree_out->Branch("Hit_isDT", "vector<int>", &Hit_isDT);
     tree_out->Branch("Hit_isCSC", "vector<int>", &Hit_isCSC);
