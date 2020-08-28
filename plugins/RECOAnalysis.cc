@@ -187,6 +187,14 @@ std::vector<int> Muon_hasShowerInStation_CSC_1;
 std::vector<int> Muon_hasShowerInStation_CSC_2;
 std::vector<int> Muon_hasShowerInStation_CSC_3;
 std::vector<int> Muon_hasShowerInStation_CSC_4;
+std::vector<int> Muon_nDigisInStation_DT_1;
+std::vector<int> Muon_nDigisInStation_DT_2;
+std::vector<int> Muon_nDigisInStation_DT_3;
+std::vector<int> Muon_nDigisInStation_DT_4;
+std::vector<int> Muon_nDigisInStation_CSC_1;
+std::vector<int> Muon_nDigisInStation_CSC_2;
+std::vector<int> Muon_nDigisInStation_CSC_3;
+std::vector<int> Muon_nDigisInStation_CSC_4;
 
 //-> PROPAGATION INFO
 
@@ -607,6 +615,14 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      Muon_hasShowerInStation_CSC_2.push_back(itmuon->hasShowerInStation(2,MuonSubdetId::CSC));
      Muon_hasShowerInStation_CSC_3.push_back(itmuon->hasShowerInStation(3,MuonSubdetId::CSC));
      Muon_hasShowerInStation_CSC_4.push_back(itmuon->hasShowerInStation(4,MuonSubdetId::CSC));
+     Muon_nDigisInStation_DT_1.push_back(itmuon->nDigisInStation(1,MuonSubdetId::DT));
+     Muon_nDigisInStation_DT_2.push_back(itmuon->nDigisInStation(2,MuonSubdetId::DT));
+     Muon_nDigisInStation_DT_3.push_back(itmuon->nDigisInStation(3,MuonSubdetId::DT));
+     Muon_nDigisInStation_DT_4.push_back(itmuon->nDigisInStation(4,MuonSubdetId::DT));
+     Muon_nDigisInStation_CSC_1.push_back(itmuon->nDigisInStation(1,MuonSubdetId::CSC));
+     Muon_nDigisInStation_CSC_2.push_back(itmuon->nDigisInStation(2,MuonSubdetId::CSC));
+     Muon_nDigisInStation_CSC_3.push_back(itmuon->nDigisInStation(3,MuonSubdetId::CSC));
+     Muon_nDigisInStation_CSC_4.push_back(itmuon->nDigisInStation(4,MuonSubdetId::CSC));
      Muon_Muonid.push_back(iMuon);
      Muon_Eventid.push_back(iEvent.id().event());
      Muon_EventluminosityBlock.push_back(iEvent.id().luminosityBlock());
@@ -635,6 +651,14 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Muon_hasShowerInStation_CSC_2.clear();
    Muon_hasShowerInStation_CSC_3.clear();
    Muon_hasShowerInStation_CSC_4.clear();
+   Muon_nDigisInStation_DT_1.clear();
+   Muon_nDigisInStation_DT_2.clear();
+   Muon_nDigisInStation_DT_3.clear();
+   Muon_nDigisInStation_DT_4.clear();
+   Muon_nDigisInStation_CSC_1.clear();
+   Muon_nDigisInStation_CSC_2.clear();
+   Muon_nDigisInStation_CSC_3.clear();
+   Muon_nDigisInStation_CSC_4.clear();
    Muon_nShowers.clear();
    Muon_Genpt.clear();
    Muon_GlbTrack_pt.clear();
@@ -747,6 +771,14 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Muon_hasShowerInStation_CSC_2", "vector<int>", &Muon_hasShowerInStation_CSC_2);
     tree_out->Branch("Muon_hasShowerInStation_CSC_3", "vector<int>", &Muon_hasShowerInStation_CSC_3);
     tree_out->Branch("Muon_hasShowerInStation_CSC_4", "vector<int>", &Muon_hasShowerInStation_CSC_4);
+    tree_out->Branch("Muon_nDigisInStation_DT_1", "vector<int>", &Muon_nDigisInStation_DT_1);
+    tree_out->Branch("Muon_nDigisInStation_DT_2", "vector<int>", &Muon_nDigisInStation_DT_2);
+    tree_out->Branch("Muon_nDigisInStation_DT_3", "vector<int>", &Muon_nDigisInStation_DT_3);
+    tree_out->Branch("Muon_nDigisInStation_DT_4", "vector<int>", &Muon_nDigisInStation_DT_4);
+    tree_out->Branch("Muon_nDigisInStation_CSC_1", "vector<int>", &Muon_nDigisInStation_CSC_1);
+    tree_out->Branch("Muon_nDigisInStation_CSC_2", "vector<int>", &Muon_nDigisInStation_CSC_2);
+    tree_out->Branch("Muon_nDigisInStation_CSC_3", "vector<int>", &Muon_nDigisInStation_CSC_3);
+    tree_out->Branch("Muon_nDigisInStation_CSC_4", "vector<int>", &Muon_nDigisInStation_CSC_4);
 
     // ////////////////////////////// HIT & EXTRAPOLATION BRANCHES //////////////////////////////
 
