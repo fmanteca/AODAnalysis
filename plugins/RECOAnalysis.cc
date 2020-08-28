@@ -178,6 +178,15 @@ std::vector<int> Muon_Eventid;
 std::vector<int> Muon_EventluminosityBlock;
 std::vector<int> Muon_nGeomDets;
 std::vector<int> Muon_nHits;
+std::vector<int> Muon_nShowers;
+std::vector<int> Muon_hasShowerInStation_DT_1;
+std::vector<int> Muon_hasShowerInStation_DT_2;
+std::vector<int> Muon_hasShowerInStation_DT_3;
+std::vector<int> Muon_hasShowerInStation_DT_4;
+std::vector<int> Muon_hasShowerInStation_CSC_1;
+std::vector<int> Muon_hasShowerInStation_CSC_2;
+std::vector<int> Muon_hasShowerInStation_CSC_3;
+std::vector<int> Muon_hasShowerInStation_CSC_4;
 
 //-> PROPAGATION INFO
 
@@ -345,7 +354,7 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      if(!GenMatch) continue;
 
      iMuon++;     
-
+     
      // Store Muon_* variables
      (itmuon->globalTrack().isNonnull())?Muon_GlbTrack_pt.push_back(itmuon->globalTrack()->pt()):Muon_GlbTrack_pt.push_back(-9999.);
      (itmuon->globalTrack().isNonnull())?Muon_GlbTrack_ptErr.push_back(itmuon->globalTrack()->ptError()):Muon_GlbTrack_ptErr.push_back(-9999.);
@@ -450,9 +459,9 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
 	   GlobalPoint prop_gp = muonState.first.globalPosition();
 
-	   edm::RefToBase<reco::Muon> muRefTmp = muons->refAt(idx);
-	   reco::CandidateBaseRef muonBaseRef(muRefTmp);
-	   reco::MuonShower MuonShowerInfo = (*muonShowerInformation)[muonBaseRef];
+	   //edm::RefToBase<reco::Muon> muRefTmp = muons->refAt(idx);
+	   //reco::CandidateBaseRef muonBaseRef(muRefTmp);
+	   //reco::MuonShower MuonShowerInfo = (*muonShowerInformation)[muonBaseRef];
 
 	   if(it->first->geographicalId().subdetId()  == MuonSubdetId::DT){
 	     DTWireId id(it->first->geographicalId().rawId());
@@ -589,6 +598,15 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      
      Muon_nGeomDets.push_back(iGeomDet);
      Muon_nHits.push_back(iHit);
+     Muon_nShowers.push_back(itmuon->numberOfShowers());
+     Muon_hasShowerInStation_DT_1.push_back(itmuon->hasShowerInStation(1,MuonSubdetId::DT));
+     Muon_hasShowerInStation_DT_2.push_back(itmuon->hasShowerInStation(2,MuonSubdetId::DT));
+     Muon_hasShowerInStation_DT_3.push_back(itmuon->hasShowerInStation(3,MuonSubdetId::DT));
+     Muon_hasShowerInStation_DT_4.push_back(itmuon->hasShowerInStation(4,MuonSubdetId::DT));
+     Muon_hasShowerInStation_CSC_1.push_back(itmuon->hasShowerInStation(1,MuonSubdetId::CSC));
+     Muon_hasShowerInStation_CSC_2.push_back(itmuon->hasShowerInStation(2,MuonSubdetId::CSC));
+     Muon_hasShowerInStation_CSC_3.push_back(itmuon->hasShowerInStation(3,MuonSubdetId::CSC));
+     Muon_hasShowerInStation_CSC_4.push_back(itmuon->hasShowerInStation(4,MuonSubdetId::CSC));
      Muon_Muonid.push_back(iMuon);
      Muon_Eventid.push_back(iEvent.id().event());
      Muon_EventluminosityBlock.push_back(iEvent.id().luminosityBlock());
@@ -609,6 +627,15 @@ void RECOAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    Muon_EventluminosityBlock.clear();
    Muon_nGeomDets.clear();
    Muon_nHits.clear();
+   Muon_hasShowerInStation_DT_1.clear();
+   Muon_hasShowerInStation_DT_2.clear();
+   Muon_hasShowerInStation_DT_3.clear();
+   Muon_hasShowerInStation_DT_4.clear();
+   Muon_hasShowerInStation_CSC_1.clear();
+   Muon_hasShowerInStation_CSC_2.clear();
+   Muon_hasShowerInStation_CSC_3.clear();
+   Muon_hasShowerInStation_CSC_4.clear();
+   Muon_nShowers.clear();
    Muon_Genpt.clear();
    Muon_GlbTrack_pt.clear();
    Muon_GlbTrack_eta.clear();
@@ -711,6 +738,15 @@ void RECOAnalysis::beginJob()
     tree_out->Branch("Muon_TunePTrack_Chindf", "vector<float>", &Muon_TunePTrack_Chindf);
     tree_out->Branch("Muon_nGeomDets", "vector<int>", &Muon_nGeomDets);
     tree_out->Branch("Muon_nHits", "vector<int>", &Muon_nHits);
+    tree_out->Branch("Muon_nShowers", "vector<int>", &Muon_nShowers);
+    tree_out->Branch("Muon_hasShowerInStation_DT_1", "vector<int>", &Muon_hasShowerInStation_DT_1);
+    tree_out->Branch("Muon_hasShowerInStation_DT_2", "vector<int>", &Muon_hasShowerInStation_DT_2);
+    tree_out->Branch("Muon_hasShowerInStation_DT_3", "vector<int>", &Muon_hasShowerInStation_DT_3);
+    tree_out->Branch("Muon_hasShowerInStation_DT_4", "vector<int>", &Muon_hasShowerInStation_DT_4);
+    tree_out->Branch("Muon_hasShowerInStation_CSC_1", "vector<int>", &Muon_hasShowerInStation_CSC_1);
+    tree_out->Branch("Muon_hasShowerInStation_CSC_2", "vector<int>", &Muon_hasShowerInStation_CSC_2);
+    tree_out->Branch("Muon_hasShowerInStation_CSC_3", "vector<int>", &Muon_hasShowerInStation_CSC_3);
+    tree_out->Branch("Muon_hasShowerInStation_CSC_4", "vector<int>", &Muon_hasShowerInStation_CSC_4);
 
     // ////////////////////////////// HIT & EXTRAPOLATION BRANCHES //////////////////////////////
 

@@ -33,7 +33,8 @@ process.GlobalTag.globaltag = '94X_mc2017_realistic_v10'  # or some other global
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-        'file:/gpfs/projects/cms/fernanpe/MUO-RunIIFall17DRPremix-00025.root'
+        'root://cms-xrd-global.cern.ch//store/group/phys_muon/SingleMuMinusPt20to2500_NoPU/step3_CMSSW_11_0_X/200403_153823/0000/step3_10.root'
+#        'file:/gpfs/projects/cms/fernanpe/MUO-RunIIFall17DRPremix-00025.root'
     )
 )
 
