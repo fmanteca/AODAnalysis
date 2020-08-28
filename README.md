@@ -4,9 +4,9 @@ This framework is devoted to get the relevant collections from RECO-SIM and put 
 
 ## Installation
 
-cmsrel CMSSW_9_4_4
+cmsrel CMSSW_11_0_3
 
-cd CMSSW_9_4_4/src
+cd CMSSW_11_0_3/src
 
 cmsenv
 
